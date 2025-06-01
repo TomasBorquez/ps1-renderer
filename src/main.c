@@ -1,14 +1,17 @@
-#define BASE_IMPLEMENTATION
-#include "base.h"
+#include <math.h>
 
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
-#include <math.h>
+#include <SDL3_image/SDL_image.h>
+
+#include <cglm.h>
+
+#define BASE_IMPLEMENTATION
+#include "base.h"
 
 #include "gl.h"
-#include "model.h"
-// #include "renderer.h"
+#include "renderer.h"
 
 #define SCREEN_HEIGHT 800
 #define SCREEN_WIDTH 800
@@ -26,6 +29,11 @@ typedef struct {
   u32 VAO;
   u32 VBO;
 
+  // Camera
+  vec3 cameraPosition;
+  vec3 cameraFront;
+  vec3 cameraUp;
+
   // Temp Frame Buffers
   char textBuffer[600];
 
@@ -33,6 +41,8 @@ typedef struct {
   size_t frameCount;
   u32 lastFPSUpdate;
   i32 FPS;
+  u64 lastFrame;
+  u64 deltaTime;
 } Renderer;
 
 Renderer renderer = {0};
@@ -124,10 +134,34 @@ void EventPoll() {
     if (renderer.e.type == SDL_EVENT_QUIT) {
       renderer.quit = true;
     }
-    if (renderer.e.type == SDL_EVENT_KEY_DOWN) {
-      if (renderer.e.key.key == SDLK_ESCAPE) {
-        renderer.quit = true;
-      }
+
+    if (renderer.e.key.key == SDLK_ESCAPE) {
+      renderer.quit = true;
+    }
+
+    f32 cameraSpeed = renderer.deltaTime * 0.5f;
+    LogInfo("deltaTime: %llu", renderer.deltaTime);
+    LogInfo("cameraSpeed: %f", cameraSpeed);
+    if (renderer.e.key.key == SDLK_A) {
+      vec3 d;
+      glm_cross(renderer.cameraFront, renderer.cameraUp, d);
+      glm_normalize(d);
+      glm_vec3_muladds(d, -cameraSpeed, renderer.cameraPosition);
+    }
+
+    if (renderer.e.key.key == SDLK_E) {
+      vec3 d;
+      glm_cross(renderer.cameraFront, renderer.cameraUp, d);
+      glm_normalize(d);
+      glm_vec3_muladds(d, cameraSpeed, renderer.cameraPosition);
+    }
+
+    if (renderer.e.key.key == SDLK_COMMA) {
+      glm_vec3_muladds(renderer.cameraFront, cameraSpeed, renderer.cameraPosition);
+    }
+
+    if (renderer.e.key.key == SDLK_O) {
+      glm_vec3_muladds(renderer.cameraFront, -cameraSpeed, renderer.cameraPosition);
     }
   }
 }
@@ -138,11 +172,15 @@ void DestroyRenderer() {
 
 void ClearScreen(Color color) {
   glClearColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glEnable(GL_DEPTH_TEST);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void BeginDrawing() {
   EventPoll();
+  u64 currTime = SDL_GetTicks();
+  renderer.deltaTime = currTime - renderer.lastFrame;
+  renderer.lastFrame = currTime;
 }
 
 void EndDrawing() {
@@ -161,28 +199,20 @@ void EndDrawing() {
 int main() {
   InitRenderer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-  u32 shaderProgram = CreateShaders(S("./src/triangle.vert"), S("./src/triangle.frag"));
+  u32 shaderProgram = CreateShader(S("./src/triangle.vert"), S("./src/triangle.frag"));
 
   // NOTE : VAO and VBO
-  Model model = InitModel(S("./resources/diablo_pose.obj"));
+  float vertices[] = {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
 
-  VectorF32 vertices = {0};
-  for (i32 i = 0; i < model.faces.length / 3; i++) {
-    VecF3 a = GetVertModel(&model, i, 0);
-    VecPush(vertices, a.x);
-    VecPush(vertices, a.y);
-    VecPush(vertices, a.z);
+                      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f, -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
 
-    VecF3 b = GetVertModel(&model, i, 1);
-    VecPush(vertices, b.x);
-    VecPush(vertices, b.y);
-    VecPush(vertices, b.z);
+                      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
 
-    VecF3 c = GetVertModel(&model, i, 2);
-    VecPush(vertices, c.x);
-    VecPush(vertices, c.y);
-    VecPush(vertices, c.z);
-  }
+                      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+                      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+                      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
 
   u32 VAO, VBO;
   glGenVertexArrays(1, &VAO);
@@ -192,29 +222,115 @@ int main() {
   glBindVertexArray(VAO);
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, vertices.length * sizeof(f32), vertices.data, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), NULL);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), NULL);
   glEnableVertexAttribArray(0);
 
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), (void *)(3 * sizeof(f32)));
+  glEnableVertexAttribArray(1);
+
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  u32 texture;
+  SDL_Surface *imgTexture = IMG_Load("./resources/wall.jpg");
+  assert(imgTexture != NULL && "Wall texture image should never be null");
+  SDL_FlipSurface(imgTexture, SDL_FLIP_VERTICAL);
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, GL_RGB, GL_UNSIGNED_BYTE, imgTexture->pixels);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  SDL_DestroySurface(imgTexture);
+
+  UseShader(shaderProgram);
+
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+  vec3 cubePositions[] = {
+    {0.0f,  0.0f,  0.0f  },
+    {2.0f,  5.0f,  -15.0f},
+    {-1.5f, -2.2f, -2.5f },
+    {-3.8f, -2.0f, -12.3f},
+    {2.4f,  -0.4f, -3.5f },
+    {-1.7f, 3.0f,  -7.5f },
+    {1.3f,  -2.0f, -2.5f },
+    {1.5f,  2.0f,  -2.5f },
+    {1.5f,  0.2f,  -1.5f },
+    {-1.3f, 1.0f,  -1.5f }
+  };
+
+  mat4 projection = GLM_MAT4_IDENTITY_INIT;
+  glm_perspective(glm_rad(50.0f), 800.0f / 800.0f, 0.1f, 100.0f, projection);
+  SetMat4Shader(shaderProgram, "projection", projection);
+
+  renderer.cameraPosition[0] = 0.0f;
+  renderer.cameraPosition[1] = 0.0f;
+  renderer.cameraPosition[2] = 3.0f;
+
+  renderer.cameraFront[0] = 0.0f;
+  renderer.cameraFront[1] = 0.0f;
+  renderer.cameraFront[2] = -1.0f;
+
+  renderer.cameraUp[0] = 0.0f;
+  renderer.cameraUp[1] = 1.0f;
+  renderer.cameraUp[2] = 0.0f;
+
+  vec3 cameraTarget = {0.0f, 0.0f, 0.0f};
+
+  // WARNING: The name direction vector is not the best chosen name,
+  // since it is actually pointing in the reverse direction of what it is targeting.
+  vec3 cameraDirection;
+  glm_vec3_sub(renderer.cameraPosition, cameraTarget, cameraDirection);
+  glm_normalize(cameraDirection);
+
+  vec3 cameraRight;
+  glm_cross(renderer.cameraUp, cameraDirection, cameraRight);
+  glm_normalize(cameraRight);
+
+  vec3 cameraUp;
+  glm_cross(cameraDirection, cameraRight, cameraUp);
   while (!renderer.quit) {
     BeginDrawing();
     {
       ClearScreen(BLACK);
 
-      glUseProgram(shaderProgram);
-
+      UseShader(shaderProgram);
       glBindVertexArray(VAO);
-      glDrawArrays(GL_TRIANGLES, 0, vertices.length / 3);
-      // glDrawArrays(GL_TRIANGLES, 0, 3);
-      glBindVertexArray(0);
+
+      mat4 view = GLM_MAT4_IDENTITY_INIT;
+      vec3 center;
+      glm_vec3_add(renderer.cameraPosition, renderer.cameraFront, center);
+      glm_lookat(renderer.cameraPosition, center, renderer.cameraUp, view);
+
+      SetMat4Shader(shaderProgram, "view", view);
+      for (size_t i = 0; i < sizeof(cubePositions) / sizeof(vec3); i++) {
+        vec3 *currCube = &cubePositions[i];
+        mat4 model = GLM_MAT4_IDENTITY_INIT;
+
+        f32 currTime = (f32)SDL_GetTicks() / 1000;
+        glm_translate(model, *currCube);
+        glm_rotate(model, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
+        SetMat4Shader(shaderProgram, "model", model);
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+      }
     }
     EndDrawing();
   }
+
+  glDeleteVertexArrays(1, &VAO);
+  glDeleteBuffers(1, &VBO);
+  glDeleteProgram(shaderProgram);
 
   DestroyRenderer();
   return 0;
