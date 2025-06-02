@@ -8,27 +8,16 @@ const f32 SPEED = 5.0f;
 const f32 ZOOM = 50.0f;
 
 static void cameraUpdateCameraVectors(Camera *camera) {
-  vec3 front;
-  front[0] = cos(glm_rad(camera->yaw)) * cos(glm_rad(camera->pitch));
-  front[1] = sin(glm_rad(camera->pitch));
-  front[2] = sin(glm_rad(camera->yaw)) * cos(glm_rad(camera->pitch));
-  glm_normalize(front);
-  camera->front[0] = front[0];
-  camera->front[1] = front[1];
-  camera->front[2] = front[2];
+  camera->front[0] = cos(glm_rad(camera->yaw)) * cos(glm_rad(camera->pitch));
+  camera->front[1] = sin(glm_rad(camera->pitch));
+  camera->front[2] = sin(glm_rad(camera->yaw)) * cos(glm_rad(camera->pitch));
+  glm_normalize(camera->front);
 
-  vec3 d;
-  glm_cross(camera->front, camera->worldUp, d);
-  glm_normalize(d);
-  camera->right[0] = d[0];
-  camera->right[1] = d[1];
-  camera->right[2] = d[2];
+  glm_cross(camera->front, camera->worldUp, camera->right);
+  glm_normalize(camera->right);
 
-  glm_cross(camera->right, camera->front, d);
-  glm_normalize(d);
-  camera->up[0] = d[0];
-  camera->up[1] = d[1];
-  camera->up[2] = d[2];
+  glm_cross(camera->right, camera->front, camera->up);
+  glm_normalize(camera->up);
 }
 
 Camera CameraCreate(vec3 position, vec3 up, f32 yaw, f32 pitch) {
@@ -68,24 +57,26 @@ void CameraProcessKeyboard(Camera *camera, CameraMovement direction, float delta
   f32 velocity = camera->movementSpeed * deltaTime;
 
   if (direction == FORWARD) {
-    glm_vec3_muladds(camera->front, velocity, camera->position);
+    vec3 horizontalFront = {camera->front[0], 0.0f, camera->front[2]};
+    glm_vec3_normalize(horizontalFront);
+    glm_vec3_muladds(horizontalFront, velocity, camera->position);
   }
 
   if (direction == BACKWARD) {
-    glm_vec3_muladds(camera->front, -velocity, camera->position);
+    vec3 horizontalFront = {camera->front[0], 0.0f, camera->front[2]};
+    glm_vec3_normalize(horizontalFront);
+    glm_vec3_muladds(horizontalFront, -velocity, camera->position);
   }
 
   if (direction == LEFT) {
     vec3 d;
-    glm_cross(camera->front, camera->up, d);
-    glm_normalize(d);
+    glm_vec3_crossn(camera->front, camera->up, d);
     glm_vec3_muladds(d, -velocity, camera->position);
   }
 
   if (direction == RIGHT) {
     vec3 d;
-    glm_cross(camera->front, camera->up, d);
-    glm_normalize(d);
+    glm_vec3_crossn(camera->front, camera->up, d);
     glm_vec3_muladds(d, velocity, camera->position);
   }
 

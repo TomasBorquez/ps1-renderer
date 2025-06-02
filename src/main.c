@@ -6,6 +6,8 @@
 #include <SDL3_image/SDL_image.h>
 #include <cglm.h>
 
+#define SCREEN_HEIGHT 800
+#define SCREEN_WIDTH 800
 #define BASE_IMPLEMENTATION
 #include "base.h"
 
@@ -13,15 +15,11 @@
 #include "camera.h"
 #include "renderer.h"
 
-#define SCREEN_HEIGHT 800
-#define SCREEN_WIDTH 800
-#include "texture_box.c"
+#include "objects/texture_object.c"
+#include "objects/light_object.c"
 
 i32 main() {
   InitRenderer(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-  RenderObject textObj = CreateTextureBox();
-  renderer.camera = CameraCreate((vec3){0.0f, 0.0f, 3.0f}, (vec3){0.0f, 1.0f, 0.0f}, -90.0f, 0.0f);
 
   vec3 cubePositions[] = {
     {0.0f,  0.0f,  0.0f  },
@@ -36,9 +34,18 @@ i32 main() {
     {-1.3f, 1.0f,  -1.5f }
   };
 
+  renderer.camera = CameraCreate((vec3){0.0f, 0.0f, 3.0f}, (vec3){0.0f, 1.0f, 0.0f}, -90.0f, 0.0f);
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(renderer.camera.fov), 800.0f / 800.0f, 0.1f, 100.0f, projection);
+
+  Object textObj = TextureObjCreate();
+  LogInfo("getting here");
   ShaderSetMat4(textObj.shaderID, "projection", projection);
+
+  Object lightObj = LightObjCreate();
+  LogInfo("getting here 2");
+  ShaderSetMat4(lightObj.shaderID, "projection", projection);
+
   while (!renderer.quit) {
     BeginDrawing();
     {
@@ -46,7 +53,7 @@ i32 main() {
 
       mat4 view = GLM_MAT4_IDENTITY_INIT;
       CameraGetViewMatrix(&renderer.camera, view);
-      UseTextureBox(&textObj, view);
+      TextureObjUse(&textObj, view);
       for (size_t i = 0; i < sizeof(cubePositions) / sizeof(vec3); i++) {
         vec3 *currCube = &cubePositions[i];
         mat4 model = GLM_MAT4_IDENTITY_INIT;
@@ -55,12 +62,12 @@ i32 main() {
         glm_translate(model, *currCube);
         glm_rotate(model, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
 
-        DrawTextureBox(&textObj, model);
+        TextureObjDraw(&textObj, model);
       }
     }
     EndDrawing();
   }
 
-  DestroyTextureBox(&textObj);
+  TextureObjDestroy(&textObj);
   DestroyRenderer();
 }
