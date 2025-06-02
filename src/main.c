@@ -23,6 +23,7 @@ typedef struct {
   SDL_GLContext glContext;
   bool quit;
   SDL_Event e;
+  bool keys[SDL_SCANCODE_COUNT];
 
   // OpenGL
   u32 shaderProgram;
@@ -33,6 +34,8 @@ typedef struct {
   vec3 cameraPosition;
   vec3 cameraFront;
   vec3 cameraUp;
+  f32 yaw;
+  f32 pitch;
 
   // Temp Frame Buffers
   char textBuffer[600];
@@ -41,8 +44,10 @@ typedef struct {
   size_t frameCount;
   u32 lastFPSUpdate;
   i32 FPS;
+
+  f32 deltaTime;
+  u64 performanceFrequency;
   u64 lastFrame;
-  u64 deltaTime;
 } Renderer;
 
 Renderer renderer = {0};
@@ -118,6 +123,8 @@ void InitRenderer(i32 width, i32 height) {
     RendererQuit(1);
   }
 
+  SDL_SetWindowRelativeMouseMode(renderer.window, true);
+
   renderer.glContext = SDL_GL_CreateContext(renderer.window);
   if (!renderer.glContext) {
     LogError("OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -126,7 +133,26 @@ void InitRenderer(i32 width, i32 height) {
 
   InitOpenGL();
 
+  renderer.performanceFrequency = SDL_GetPerformanceFrequency();
   renderer.lastFPSUpdate = SDL_GetTicks();
+}
+
+void MoveCamera(SDL_MouseMotionEvent motion) {
+  float xoffset = motion.xrel;
+  float yoffset = -motion.yrel;
+
+  const float sensitivity = 0.03f;
+  xoffset *= sensitivity;
+  yoffset *= sensitivity;
+  renderer.yaw += xoffset;
+  renderer.pitch += yoffset;
+  if (renderer.pitch > 89.0f) renderer.pitch = 89.0f;
+  if (renderer.pitch < -89.0f) renderer.pitch = -89.0f;
+
+  renderer.cameraFront[0] = cos(glm_rad(renderer.yaw)) * cos(glm_rad(renderer.pitch));
+  renderer.cameraFront[1] = sin(glm_rad(renderer.pitch));
+  renderer.cameraFront[2] = sin(glm_rad(renderer.yaw)) * cos(glm_rad(renderer.pitch));
+  glm_normalize(renderer.cameraFront);
 }
 
 void EventPoll() {
@@ -135,35 +161,62 @@ void EventPoll() {
       renderer.quit = true;
     }
 
+    if (renderer.e.type == SDL_EVENT_MOUSE_MOTION) {
+      MoveCamera(renderer.e.motion);
+    }
+
     if (renderer.e.key.key == SDLK_ESCAPE) {
       renderer.quit = true;
     }
 
-    f32 cameraSpeed = renderer.deltaTime * 0.5f;
-    LogInfo("deltaTime: %llu", renderer.deltaTime);
-    LogInfo("cameraSpeed: %f", cameraSpeed);
-    if (renderer.e.key.key == SDLK_A) {
-      vec3 d;
-      glm_cross(renderer.cameraFront, renderer.cameraUp, d);
-      glm_normalize(d);
-      glm_vec3_muladds(d, -cameraSpeed, renderer.cameraPosition);
+    if (renderer.e.type == SDL_EVENT_KEY_DOWN) {
+      if (renderer.e.key.key == SDLK_ESCAPE) {
+        renderer.quit = true;
+      }
+      renderer.keys[renderer.e.key.scancode] = true;
     }
 
-    if (renderer.e.key.key == SDLK_E) {
-      vec3 d;
-      glm_cross(renderer.cameraFront, renderer.cameraUp, d);
-      glm_normalize(d);
-      glm_vec3_muladds(d, cameraSpeed, renderer.cameraPosition);
-    }
-
-    if (renderer.e.key.key == SDLK_COMMA) {
-      glm_vec3_muladds(renderer.cameraFront, cameraSpeed, renderer.cameraPosition);
-    }
-
-    if (renderer.e.key.key == SDLK_O) {
-      glm_vec3_muladds(renderer.cameraFront, -cameraSpeed, renderer.cameraPosition);
+    if (renderer.e.type == SDL_EVENT_KEY_UP) {
+      renderer.keys[renderer.e.key.scancode] = false;
     }
   }
+}
+
+void HandleInput() {
+  f32 cameraSpeed = renderer.deltaTime * 5.f;
+
+  if (renderer.keys[SDL_SCANCODE_A]) {
+    vec3 d;
+    glm_cross(renderer.cameraFront, renderer.cameraUp, d);
+    glm_normalize(d);
+    glm_vec3_muladds(d, -cameraSpeed, renderer.cameraPosition);
+  }
+
+  if (renderer.keys[SDL_SCANCODE_D]) {
+    vec3 d;
+    glm_cross(renderer.cameraFront, renderer.cameraUp, d);
+    glm_normalize(d);
+    glm_vec3_muladds(d, cameraSpeed, renderer.cameraPosition);
+  }
+
+  if (renderer.keys[SDL_SCANCODE_W]) {
+    glm_vec3_muladds(renderer.cameraFront, cameraSpeed, renderer.cameraPosition);
+  }
+
+  if (renderer.keys[SDL_SCANCODE_S]) {
+    glm_vec3_muladds(renderer.cameraFront, -cameraSpeed, renderer.cameraPosition);
+  }
+
+  if (renderer.keys[SDL_SCANCODE_J]) {
+    glm_vec3_muladds(renderer.cameraFront, -cameraSpeed, renderer.cameraPosition);
+  }
+
+  if (renderer.keys[SDL_SCANCODE_P]) {
+    glm_vec3_muladds(renderer.cameraFront, -cameraSpeed, renderer.cameraPosition);
+  }
+
+  // FPS like, .y stays 0
+  renderer.cameraPosition[1] = 0;
 }
 
 void DestroyRenderer() {
@@ -178,8 +231,9 @@ void ClearScreen(Color color) {
 
 void BeginDrawing() {
   EventPoll();
-  u64 currTime = SDL_GetTicks();
-  renderer.deltaTime = currTime - renderer.lastFrame;
+  HandleInput();
+  u64 currTime = SDL_GetPerformanceCounter();
+  renderer.deltaTime = (f32)(currTime - renderer.lastFrame) / renderer.performanceFrequency;
   renderer.lastFrame = currTime;
 }
 
@@ -254,8 +308,6 @@ int main() {
 
   UseShader(shaderProgram);
 
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
   vec3 cubePositions[] = {
     {0.0f,  0.0f,  0.0f  },
     {2.0f,  5.0f,  -15.0f},
@@ -284,6 +336,8 @@ int main() {
   renderer.cameraUp[0] = 0.0f;
   renderer.cameraUp[1] = 1.0f;
   renderer.cameraUp[2] = 0.0f;
+
+  renderer.yaw = -90.0f;
 
   vec3 cameraTarget = {0.0f, 0.0f, 0.0f};
 

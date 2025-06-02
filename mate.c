@@ -8,7 +8,6 @@ i32 main() {
 
     AddFile("./src/main.c");
     AddFile("./src/model.c");
-    AddFile("./src/renderer.c");
     AddFile("./src/gl.c");
 
     AddIncludePaths("./vendor/SDL3/include", "./vendor/SDL3_image/include");
