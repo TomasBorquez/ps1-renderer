@@ -4,10 +4,12 @@
 i32 main() {
   StartBuild();
   {
-    CreateExecutable((ExecutableOptions){.output = "main", .flags = "-Wall -Wextra -ggdb -std=c23"});
+    CreateExecutable((ExecutableOptions){.output = "main", .flags = "-Wall -Wextra -ggdb -std=c23 -fdiagnostics-color=always"});
 
     AddFile("./src/main.c");
     AddFile("./src/model.c");
+    AddFile("./src/camera.c");
+    AddFile("./src/renderer.c");
     AddFile("./src/gl.c");
 
     AddIncludePaths("./vendor/SDL3/include", "./vendor/SDL3_image/include");

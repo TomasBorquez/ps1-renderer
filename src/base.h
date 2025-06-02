@@ -653,10 +653,10 @@ void ArenaReset(Arena *arena) {
 
 Arena ArenaInit(size_t size) {
   return (Arena){
-      .buffer = (i8 *)malloc(size),
-      .bufferLength = size,
-      .prevOffset = 0,
-      .currOffset = 0,
+    .buffer = (i8 *)malloc(size),
+    .bufferLength = size,
+    .prevOffset = 0,
+    .currOffset = 0,
   };
 }
 
@@ -714,8 +714,8 @@ String StrNew(Arena *arena, char *str) {
 
 String s(char *msg) {
   return (String){
-      .length = strlen(msg),
-      .data = msg,
+    .length = strlen(msg),
+    .data = msg,
   };
 }
 

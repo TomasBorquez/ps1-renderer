@@ -1,5 +1,9 @@
 #pragma once
 
+#include <SDL3/SDL.h>
+#include <cglm.h>
+
+#include "camera.h"
 #include "base.h"
 
 typedef struct {
@@ -69,3 +73,49 @@ typedef struct {
 #define RED (Color){255, 0, 0, 255}
 #define BLUE (Color){64, 128, 255, 255}
 #define YELLOW (Color){255, 200, 0, 255}
+
+typedef struct {
+  SDL_Window *window;
+  SDL_Renderer *renderer;
+  SDL_GLContext glContext;
+  bool quit;
+  SDL_Event e;
+  bool keys[SDL_SCANCODE_COUNT];
+
+  i32 width;
+  i32 height;
+
+  // OpenGL
+  u32 shaderProgram;
+  u32 VAO;
+  u32 VBO;
+
+  // Camera
+  Camera camera;
+
+  // Temp Frame Buffers
+  char textBuffer[600];
+
+  // FPS
+  size_t frameCount;
+  u32 lastFPSUpdate;
+  i32 FPS;
+
+  f64 deltaTime;
+  u64 performanceFrequency;
+  u64 lastFrame;
+} Renderer;
+extern Renderer renderer;
+
+void InitOpenGL();
+void InitRenderer(i32 width, i32 height);
+
+void DestroyRenderer();
+void RendererQuit(errno_t code);
+
+void EventPoll();
+void HandleInput();
+void ClearScreen(Color color);
+
+void BeginDrawing();
+void EndDrawing();
