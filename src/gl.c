@@ -128,8 +128,9 @@ void ShaderSetI(u32 id, const char *name, i32 value) {
   glUniform1i(uniformLocation, value);
 }
 
-void ShaderSetF(u32 id, const char *name, f32 value) {
-  i32 uniformLocation = glGetUniformLocation(id, name);
+void ShaderSetF(Object *obj, const char *name, f32 value) {
+  ShaderUse(obj->shaderID);
+  i32 uniformLocation = glGetUniformLocation(obj->shaderID, name);
   assert(uniformLocation != -1 && "UniformLocation does not exist");
   glUniform1f(uniformLocation, value);
 }
@@ -150,7 +151,8 @@ u32 ShaderCreateTexture(char *texturePath) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, GL_RGB, GL_UNSIGNED_BYTE, imgTexture->pixels);
+  // WARNING: GL_RGBA for PNG, and GL_RGB for JPEG, we should detect it automatically
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgTexture->pixels);
   glGenerateMipmap(GL_TEXTURE_2D);
 
   SDL_DestroySurface(imgTexture);

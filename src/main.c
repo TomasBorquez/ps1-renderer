@@ -15,7 +15,7 @@
 #include "camera.h"
 #include "renderer.h"
 
-#include "objects/static_object.c"
+#include "objects/texture_object.c"
 #include "objects/light_object.c"
 
 i32 main() {
@@ -34,12 +34,12 @@ i32 main() {
     {-1.3f, 1.0f,  -1.5f }
   };
 
-  renderer.camera = CameraCreate((vec3){0.0f, 0.0f, 3.0f}, (vec3){0.0f, 1.0f, 0.0f}, -90.0f, 0.0f);
+  renderer.camera = CameraCreate((vec3){0.0f, 0.0f, 4.0f}, (vec3){0.0f, 1.0f, 0.0f}, -90.0f, 0.0f);
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(renderer.camera.fov), 800.0f / 800.0f, 0.1f, 100.0f, projection);
 
-  Object staticObj = StaticObjCreate();
-  ShaderSetMat4(&staticObj, "projection", projection);
+  Object textObj = TextureObjCreate();
+  ShaderSetMat4(&textObj, "projection", projection);
 
   Object lightObj = LightObjCreate();
   ShaderSetMat4(&lightObj, "projection", projection);
@@ -47,35 +47,48 @@ i32 main() {
     BeginDrawing();
     {
       ClearScreen(BLACK);
+      f32 currTime = (f32)SDL_GetTicks() / 1000;
 
+      // View mat
       mat4 view = GLM_MAT4_IDENTITY_INIT;
       CameraGetViewMatrix(&renderer.camera, view);
-      StaticObjUse(&staticObj, view);
+
+      // LightObj
+      LightObjUse(&lightObj, view);
+      mat4 lightModel = GLM_MAT4_IDENTITY_INIT;
+      vec3 lightPos = {0.0f, 0.0f, 5.0f};
+      // vec3 lightPos = {sin(currTime) * 5, 0.0f, 5.0f};
+
+      glm_translate(lightModel, lightPos);
+      glm_scale(lightModel, (vec3){0.2f, 0.2f, 0.2f});
+      LightObjDraw(&lightObj, lightModel);
+
+      // TextureObj
+      TextureObjUse(&textObj, view);
       for (size_t i = 0; i < sizeof(cubePositions) / sizeof(vec3); i++) {
         vec3 *currCube = &cubePositions[i];
-        mat4 model = GLM_MAT4_IDENTITY_INIT;
+        mat4 staticModel = GLM_MAT4_IDENTITY_INIT;
 
-        f32 currTime = (f32)SDL_GetTicks() / 1000;
-        glm_translate(model, *currCube);
-        glm_rotate(model, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
+        glm_translate(staticModel, *currCube);
+        // glm_rotate(staticModel, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
 
-        ShaderSetVecF3(&staticObj, "objectColor", (vec3){1.0f, 0.5f, 0.31f});
-        ShaderSetVecF3(&staticObj, "lightColor", (vec3){1.0f, 1.0f, 1.0f});
+        ShaderSetVecF3(&textObj, "light.ambient", (vec3){0.2f, 0.2f, 0.2f});
 
-        StaticObjDraw(&staticObj, model);
+        ShaderSetVecF3(&textObj, "light.diffuse", (vec3){0.5f, 0.5f, 0.5f});
+        ShaderSetVecF3(&textObj, "light.specular", (vec3){1.0f, 1.0f, 1.0f});
+        ShaderSetVecF3(&textObj, "light.position", lightPos);
+
+        ShaderSetF(&textObj, "material.shininess", 32.0f);
+
+        ShaderSetVecF3(&textObj, "viewPos", renderer.camera.position);
+
+        TextureObjDraw(&textObj, staticModel);
       }
-
-      LightObjUse(&lightObj, view);
-
-      mat4 model = GLM_MAT4_IDENTITY_INIT;
-      glm_translate(model, (vec3){0.0f, 0.0f, 3.0f});
-      glm_scale(model, (vec3){0.2f, 0.2f, 0.2f});
-      LightObjDraw(&lightObj, model);
     }
     EndDrawing();
   }
 
-  StaticObjDestroy(&staticObj);
+  TextureObjDestroy(&textObj);
   LightObjDestroy(&lightObj);
   DestroyRenderer();
 }
