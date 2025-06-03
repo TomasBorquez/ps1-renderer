@@ -15,7 +15,7 @@
 #include "camera.h"
 #include "renderer.h"
 
-#include "objects/texture_object.c"
+#include "objects/static_object.c"
 #include "objects/light_object.c"
 
 i32 main() {
@@ -38,14 +38,11 @@ i32 main() {
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(renderer.camera.fov), 800.0f / 800.0f, 0.1f, 100.0f, projection);
 
-  Object textObj = TextureObjCreate();
-  LogInfo("getting here");
-  ShaderSetMat4(textObj.shaderID, "projection", projection);
+  Object staticObj = StaticObjCreate();
+  ShaderSetMat4(&staticObj, "projection", projection);
 
   Object lightObj = LightObjCreate();
-  LogInfo("getting here 2");
-  ShaderSetMat4(lightObj.shaderID, "projection", projection);
-
+  ShaderSetMat4(&lightObj, "projection", projection);
   while (!renderer.quit) {
     BeginDrawing();
     {
@@ -53,7 +50,7 @@ i32 main() {
 
       mat4 view = GLM_MAT4_IDENTITY_INIT;
       CameraGetViewMatrix(&renderer.camera, view);
-      TextureObjUse(&textObj, view);
+      StaticObjUse(&staticObj, view);
       for (size_t i = 0; i < sizeof(cubePositions) / sizeof(vec3); i++) {
         vec3 *currCube = &cubePositions[i];
         mat4 model = GLM_MAT4_IDENTITY_INIT;
@@ -62,12 +59,23 @@ i32 main() {
         glm_translate(model, *currCube);
         glm_rotate(model, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
 
-        TextureObjDraw(&textObj, model);
+        ShaderSetVecF3(&staticObj, "objectColor", (vec3){1.0f, 0.5f, 0.31f});
+        ShaderSetVecF3(&staticObj, "lightColor", (vec3){1.0f, 1.0f, 1.0f});
+
+        StaticObjDraw(&staticObj, model);
       }
+
+      LightObjUse(&lightObj, view);
+
+      mat4 model = GLM_MAT4_IDENTITY_INIT;
+      glm_translate(model, (vec3){0.0f, 0.0f, 3.0f});
+      glm_scale(model, (vec3){0.2f, 0.2f, 0.2f});
+      LightObjDraw(&lightObj, model);
     }
     EndDrawing();
   }
 
-  TextureObjDestroy(&textObj);
+  StaticObjDestroy(&staticObj);
+  LightObjDestroy(&lightObj);
   DestroyRenderer();
 }

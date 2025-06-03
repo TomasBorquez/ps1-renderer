@@ -8,10 +8,10 @@
 #include "gl.h"
 #include "object.h"
 
-Object LightObjCreate() {
+Object StaticObjCreate() {
   Object result = {0};
 
-  result.shaderID = ShaderCreate(S("./src/shaders/light-obj.vert"), S("./src/shaders/light-obj.frag"));
+  result.shaderID = ShaderCreate(S("./src/shaders/static-obj.vert"), S("./src/shaders/static-obj.frag"));
   ShaderUse(result.shaderID);
 
   f32 vertices[] = {
@@ -46,18 +46,18 @@ Object LightObjCreate() {
   return result;
 }
 
-void LightObjUse(Object *obj, mat4 view) {
+void StaticObjUse(Object *obj, mat4 view) {
   ShaderUse(obj->shaderID);
   glBindVertexArray(obj->VAO);
   ShaderSetMat4(obj, "view", view);
 }
 
-void LightObjDraw(Object *obj, mat4 model) {
+void StaticObjDraw(Object *obj, mat4 model) {
   ShaderSetMat4(obj, "model", model);
   glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-void LightObjDestroy(Object *obj) {
+void StaticObjDestroy(Object *obj) {
   glDeleteVertexArrays(1, &obj->VAO);
   glDeleteBuffers(1, &obj->VBO);
   glDeleteProgram(obj->shaderID);

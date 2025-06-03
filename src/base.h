@@ -1218,8 +1218,9 @@ errno_t FileRead(Arena *arena, String *path, String *result) {
     return FILE_READ_FAILED;
   }
 
-  *result = (String){.data = buffer, .length = bytesRead};
+  buffer[bytesRead] = '\0';
 
+  *result = (String){.data = buffer, .length = bytesRead};
   CloseHandle(hFile);
   free(pathStr);
   return SUCCESS;

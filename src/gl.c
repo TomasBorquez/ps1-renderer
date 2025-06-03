@@ -1,8 +1,8 @@
-#include "gl.h"
-
 #include <GL/glew.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3_image/SDL_image.h>
+
+#include "gl.h"
 
 typedef struct {
   String source;
@@ -18,7 +18,7 @@ static ShaderSource readShader(String *sourcePath) {
   }
 
   ShaderSource result = {0};
-  result.arena = ArenaInit(stats.size * 1.5);
+  result.arena = ArenaInit(stats.size * 2);
   system(F(&result.arena, "dos2unix %s", sourcePath->data).data);
 
   err = FileRead(&result.arena, sourcePath, &result.source);
@@ -45,7 +45,6 @@ static void checkCompileErrors(GLuint shader, String *type) {
   }
 
   glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-
   if (success) {
     return;
   }
@@ -55,35 +54,18 @@ static void checkCompileErrors(GLuint shader, String *type) {
   abort();
 }
 
-// TODO: Add geometry shader, NULL if not wanted
-// NOTE: This compiles and links the Shaders
 u32 ShaderCreate(String vertexShaderPath, String fragmentShaderPath) {
   ShaderSource vertexShaderSource = readShader(&vertexShaderPath);
-  defer {
-    ArenaFree(&vertexShaderSource.arena);
-  };
-
   ShaderSource fragmentShaderSource = readShader(&fragmentShaderPath);
-  defer {
-    ArenaFree(&fragmentShaderSource.arena);
-  };
 
   // NOTE: Compile Vertex Shader
   u32 vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-  defer {
-    glDeleteShader(vertexShaderID);
-  };
-
   glShaderSource(vertexShaderID, 1, (const char *const *)&vertexShaderSource.source.data, NULL);
   glCompileShader(vertexShaderID);
   checkCompileErrors(vertexShaderID, &S("VERTEX"));
 
   // NOTE: Compile Fragment Shader
   u32 fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-  defer {
-    glDeleteShader(fragmentShaderID);
-  };
-
   glShaderSource(fragmentShaderID, 1, (const char *const *)&fragmentShaderSource.source.data, NULL);
   glCompileShader(fragmentShaderID);
   checkCompileErrors(fragmentShaderID, &S("FRAGMENT"));
@@ -95,6 +77,12 @@ u32 ShaderCreate(String vertexShaderPath, String fragmentShaderPath) {
   glLinkProgram(shaderProgram);
   checkCompileErrors(shaderProgram, &S("PROGRAM"));
 
+  // Clear state
+  ArenaFree(&vertexShaderSource.arena);
+  ArenaFree(&fragmentShaderSource.arena);
+  glDeleteShader(vertexShaderID);
+  glDeleteShader(fragmentShaderID);
+
   return shaderProgram;
 }
 
@@ -102,8 +90,9 @@ void ShaderUse(u32 id) {
   glUseProgram(id);
 }
 
-void ShaderSetMat4(u32 id, const char *name, mat4 value) {
-  i32 uniformLocation = glGetUniformLocation(id, name);
+void ShaderSetMat4(Object *obj, const char *name, mat4 value) {
+  ShaderUse(obj->shaderID);
+  i32 uniformLocation = glGetUniformLocation(obj->shaderID, name);
   assert(uniformLocation != -1 && "UniformLocation does not exist");
   glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, value[0]);
 }
@@ -114,8 +103,9 @@ void ShaderSetVecF4(u32 id, const char *name, vec4 value) {
   glUniform4f(uniformLocation, value[0], value[1], value[2], value[3]);
 }
 
-void ShaderSetVecF3(u32 id, const char *name, vec3 value) {
-  i32 uniformLocation = glGetUniformLocation(id, name);
+void ShaderSetVecF3(Object *obj, const char *name, vec3 value) {
+  ShaderUse(obj->shaderID);
+  i32 uniformLocation = glGetUniformLocation(obj->shaderID, name);
   assert(uniformLocation != -1 && "UniformLocation does not exist");
   glUniform3f(uniformLocation, value[0], value[1], value[2]);
 }

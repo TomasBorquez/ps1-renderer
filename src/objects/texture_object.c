@@ -59,11 +59,11 @@ void TextureObjUse(Object *obj, mat4 view) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, obj->textures[0]);
 
-  ShaderSetMat4(obj->shaderID, "view", view);
+  ShaderSetMat4(obj, "view", view);
 }
 
 void TextureObjDraw(Object *obj, mat4 model) {
-  ShaderSetMat4(obj->shaderID, "model", model);
+  ShaderSetMat4(obj, "model", model);
   glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
