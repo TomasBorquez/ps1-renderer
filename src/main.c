@@ -56,8 +56,8 @@ i32 main() {
       // LightObj
       LightObjUse(&lightObj, view);
       mat4 lightModel = GLM_MAT4_IDENTITY_INIT;
-      vec3 lightPos = {0.0f, 0.0f, 5.0f};
-      // vec3 lightPos = {sin(currTime) * 5, 0.0f, 5.0f};
+      // vec3 lightPos = {0.0f, 0.0f, 5.0f};
+      vec3 lightPos = {sin(currTime) * 5, 0.0f, 5.0f};
 
       glm_translate(lightModel, lightPos);
       glm_scale(lightModel, (vec3){0.2f, 0.2f, 0.2f});
@@ -72,7 +72,11 @@ i32 main() {
         glm_translate(staticModel, *currCube);
         glm_rotate(staticModel, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
 
-        ShaderSetVecF3(&textObj, "light.position", lightPos);
+        ShaderSetVecF3(&textObj, "light.position", renderer.camera.position);
+        ShaderSetVecF3(&textObj, "light.direction", renderer.camera.front);
+        ShaderSetF(&textObj, "light.cutOff", cos(glm_rad(25)));
+        ShaderSetF(&textObj, "light.outerCutOff", cos(glm_rad(35)));
+
         ShaderSetVecF3(&textObj, "light.ambient", (vec3){0.2f, 0.2f, 0.2f});
         ShaderSetVecF3(&textObj, "light.diffuse", (vec3){0.5f, 0.5f, 0.5f});
         ShaderSetVecF3(&textObj, "light.specular", (vec3){1.0f, 1.0f, 1.0f});

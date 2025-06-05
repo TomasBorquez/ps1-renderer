@@ -13,6 +13,28 @@ struct Material {
 };
 uniform Material material;
 
+struct DirectionalLight {
+  vec3 direction;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+};
+
+struct FlashLight {
+  vec3 position;
+  vec3 direction;
+  float cutOff;
+  float outerCutOff;
+
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+
+  float constant;
+  float linear;
+  float quadratic;
+};
+
 struct Light {
   vec3 position;
 
@@ -23,7 +45,7 @@ struct Light {
   float linear;
   float quadratic;
 };
-uniform Light light;
+uniform FlashLight light;
 
 uniform vec3 viewPos;
 
@@ -46,6 +68,13 @@ void main() {
 
   vec3 textureResult = max(vec3(texture(material.specular, TextCoords)), 0.05);
   vec3 specular = light.specular * spec * textureResult;
+
+  // spotlight (soft edges)
+  float theta = dot(lightDir, normalize(-light.direction));
+  float epsilon = (light.cutOff - light.outerCutOff);
+  float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+  diffuse *= intensity;
+  specular *= intensity;
 
   // Attenuation
   float distance = length(light.position - FragPos);
