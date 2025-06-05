@@ -70,13 +70,15 @@ i32 main() {
         mat4 staticModel = GLM_MAT4_IDENTITY_INIT;
 
         glm_translate(staticModel, *currCube);
-        // glm_rotate(staticModel, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
+        glm_rotate(staticModel, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
 
+        ShaderSetVecF3(&textObj, "light.position", lightPos);
         ShaderSetVecF3(&textObj, "light.ambient", (vec3){0.2f, 0.2f, 0.2f});
-
         ShaderSetVecF3(&textObj, "light.diffuse", (vec3){0.5f, 0.5f, 0.5f});
         ShaderSetVecF3(&textObj, "light.specular", (vec3){1.0f, 1.0f, 1.0f});
-        ShaderSetVecF3(&textObj, "light.position", lightPos);
+
+        ShaderSetF(&textObj, "light.linear", 0.09f);
+        ShaderSetF(&textObj, "light.quadratic", 0.032f);
 
         ShaderSetF(&textObj, "material.shininess", 32.0f);
 

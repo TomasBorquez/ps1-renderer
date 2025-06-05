@@ -135,7 +135,8 @@ void ShaderSetF(Object *obj, const char *name, f32 value) {
   glUniform1f(uniformLocation, value);
 }
 
-u32 ShaderCreateTexture(char *texturePath) {
+// TODO: GL_RGBA for PNG, and GL_RGB for JPEG, we should detect it automatically on the path, assert that its a known extension too
+u32 ShaderCreateTexture(char *texturePath, bool png) {
   u32 texture;
   SDL_Surface *imgTexture = IMG_Load(texturePath);
   assert(imgTexture != NULL && "Texture image failed to load");
@@ -151,9 +152,13 @@ u32 ShaderCreateTexture(char *texturePath) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  // WARNING: GL_RGBA for PNG, and GL_RGB for JPEG, we should detect it automatically
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgTexture->pixels);
-  glGenerateMipmap(GL_TEXTURE_2D);
+  if (png) {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgTexture->pixels);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, GL_RGB, GL_UNSIGNED_BYTE, imgTexture->pixels);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  }
 
   SDL_DestroySurface(imgTexture);
   return texture;

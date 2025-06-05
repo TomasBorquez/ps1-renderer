@@ -55,10 +55,10 @@ Object TextureObjCreate() {
   glBindVertexArray(0);
 
   // Set texture
-  result.textures[0] = ShaderCreateTexture("./resources/container2.png");
+  result.textures[0] = ShaderCreateTexture("./resources/container2.png", true);
   ShaderSetI(result.shaderID, "material.diffuse", 0);
 
-  result.textures[1] = ShaderCreateTexture("./resources/container2_specular.png");
+  result.textures[1] = ShaderCreateTexture("./resources/container2_specular.png", true);
   ShaderSetI(result.shaderID, "material.specular", 1);
 
   return result;

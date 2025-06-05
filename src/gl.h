@@ -16,4 +16,4 @@ void ShaderSetB(u32 id, const char *name, bool value);
 void ShaderSetI(u32 id, const char *name, i32 value);
 void ShaderSetF(Object *obj, const char *name, f32 value);
 
-u32 ShaderCreateTexture(char *texturePath);
+u32 ShaderCreateTexture(char *texturePath, bool png);

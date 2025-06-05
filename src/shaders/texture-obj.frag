@@ -8,21 +8,28 @@ out vec4 FragColor;
 struct Material {
   sampler2D diffuse;
   sampler2D specular;
+  // sampler2D emission;
   float shininess;
 };
 uniform Material material;
 
 struct Light {
   vec3 position;
+
   vec3 ambient;
   vec3 diffuse;
   vec3 specular;
+
+  float linear;
+  float quadratic;
 };
 uniform Light light;
 
 uniform vec3 viewPos;
 
 void main() {
+  const float lightConstant = 1.0f;
+
   // Ambient
   vec3 ambient = light.ambient * vec3(texture(material.diffuse, TextCoords));
 
@@ -36,7 +43,16 @@ void main() {
   vec3 viewDir = normalize(viewPos - FragPos);
   vec3 reflectDir = reflect(-lightDir, norm);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-  vec3 specular = light.specular * (spec * vec3(texture(material.specular, TextCoords)));
+
+  vec3 textureResult = max(vec3(texture(material.specular, TextCoords)), 0.05);
+  vec3 specular = light.specular * spec * textureResult;
+
+  // Attenuation
+  float distance = length(light.position - FragPos);
+  float attenuation = 1.0 / (lightConstant + light.linear * distance + light.quadratic * (distance * distance));
+  ambient *= attenuation;
+  diffuse *= attenuation;
+  specular *= attenuation;
 
   FragColor = vec4(ambient + diffuse + specular, 1.0);
 }
