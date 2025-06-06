@@ -162,7 +162,7 @@ void MeshDraw(Mesh *mesh, Object *obj) {
     }
     snprintf(name, 42, "material.%s%d", type, number);
 
-    ShaderSetI(obj->shaderID, name, i);
+    ShaderSetI(obj, name, i);
     glBindTexture(GL_TEXTURE_2D, (VecAt(mesh->textures, i)).id);
   }
 

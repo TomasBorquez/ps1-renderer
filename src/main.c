@@ -20,31 +20,54 @@
 i32 main() {
   InitRenderer(1800, 900);
 
+  // Camera
   renderer.camera = CameraCreate((vec3){0.0f, 0.0f, 4.0f}, (vec3){0.0f, 1.0f, 0.0f}, -90.0f, 0.0f);
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(renderer.camera.fov), (f32)renderer.width / (f32)renderer.height, 0.1f, 100.0f, projection);
 
+  // Obj Creation
   Object modelObj = ModelObjCreate("./resources/backpack/backpack.obj", "./resources/backpack/");
   ShaderSetMat4(&modelObj, "projection", projection);
 
   Object lightObj = LightObjCreate();
   ShaderSetMat4(&lightObj, "projection", projection);
+
+  // Lights
+  SpotLight spotLight = {
+    .ambient = {0.2f, 0.2f, 0.2f},
+    .diffuse = {0.5f, 0.5f, 0.5f},
+    .specular = {1.0f, 1.0f, 1.0f},
+    .cutOff = cos(glm_rad(25)),
+    .outerCutOff = cos(glm_rad(35)),
+    .linear = 0.09f,
+    .quadratic = 0.032f,
+  };
+
+  PointLight pointLight = {
+    .position = {0.0f, 0.0f, 3.0f},
+    .ambient = {0.3f, 0.5f, 0.3f},
+    .specular = {0.3f, 0.5f, 0.3f},
+    .diffuse = {0.5f, 0.5f, 0.5f},
+    .linear = 0.09f,
+    .quadratic = 0.032f,
+  };
   while (!renderer.quit) {
     BeginDrawing();
     {
       ClearScreen(BLACK);
       f32 currTime = (f32)SDL_GetTicks() / 1000;
 
-      // View mat
+      // View Mat
       mat4 view = GLM_MAT4_IDENTITY_INIT;
       CameraGetViewMatrix(&renderer.camera, view);
 
       // LightObj
       LightObjUse(&lightObj, view);
       mat4 lightModel = GLM_MAT4_IDENTITY_INIT;
-      vec3 lightPos = {sin(currTime * 2), 0.0f, 3.0f};
+      pointLight.position[0] = sin(currTime * 2);
+      ShaderSetVecF3(&lightObj, "lightColor", pointLight.ambient);
 
-      glm_translate(lightModel, lightPos);
+      glm_translate(lightModel, pointLight.position);
       glm_scale(lightModel, (vec3){0.2f, 0.2f, 0.2f});
       LightObjDraw(&lightObj, lightModel);
 
@@ -55,31 +78,12 @@ i32 main() {
         ShaderSetVecF3(&modelObj, "viewPos", renderer.camera.position);
 
         // Spotlight uniform
-        ShaderSetVecF3(&modelObj, "spotLight.position", renderer.camera.position);
-        ShaderSetVecF3(&modelObj, "spotLight.direction", renderer.camera.front);
-        ShaderSetF(&modelObj, "spotLight.cutOff", cos(glm_rad(25)));
-        ShaderSetF(&modelObj, "spotLight.outerCutOff", cos(glm_rad(35)));
-
-        ShaderSetVecF3(&modelObj, "spotLight.ambient", (vec3){0.2f, 0.2f, 0.2f});
-        ShaderSetVecF3(&modelObj, "spotLight.diffuse", (vec3){0.5f, 0.5f, 0.5f});
-        ShaderSetVecF3(&modelObj, "spotLight.specular", (vec3){1.0f, 1.0f, 1.0f});
-
-        ShaderSetF(&modelObj, "spotLight.linear", 0.09f);
-        ShaderSetF(&modelObj, "spotLight.quadratic", 0.032f);
-
-        ShaderSetB(&modelObj, "spotLight.isActive", true);
+        glm_vec3_copy(renderer.camera.position, spotLight.position);
+        glm_vec3_copy(renderer.camera.front, spotLight.direction);
+        ShaderSetSpotLight(&modelObj, &spotLight);
 
         // PointLight uniform
-        ShaderSetVecF3(&modelObj, "pointLight.position", lightPos);
-
-        ShaderSetF(&modelObj, "pointLight.linear", 0.09f);
-        ShaderSetF(&modelObj, "pointLight.quadratic", 0.032f);
-
-        ShaderSetVecF3(&modelObj, "pointLight.ambient", (vec3){0.5f, 0.3f, 0.3f});
-        ShaderSetVecF3(&modelObj, "pointLight.specular", (vec3){0.5f, 0.3f, 0.3f});
-        ShaderSetVecF3(&modelObj, "pointLight.diffuse", (vec3){0.5f, 0.5f, 0.5f});
-
-        ShaderSetB(&modelObj, "pointLight.isActive", true);
+        ShaderSetPointLight(&modelObj, &pointLight);
 
         // Material
         ShaderSetF(&modelObj, "material.shininess", 32.0f);
