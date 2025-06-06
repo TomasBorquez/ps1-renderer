@@ -6,41 +6,41 @@
 
 typedef struct {
   String source;
-  Arena arena;
+  Arena *arena;
 } ShaderSource;
 
-static ShaderSource readShader(String *sourcePath) {
+static ShaderSource readShader(String sourcePath) {
   File stats;
   errno_t err = FileStats(sourcePath, &stats);
   if (err != SUCCESS) {
-    LogError("FileStats: failed %d, for file %s", err, sourcePath->data);
+    LogError("FileStats: failed %d, for file %s", err, sourcePath.data);
     abort();
   }
 
   ShaderSource result = {0};
-  result.arena = ArenaInit(stats.size * 2);
-  system(F(&result.arena, "dos2unix %s", sourcePath->data).data);
+  result.arena = ArenaCreate(stats.size * 2);
+  system(F(result.arena, "dos2unix %s", sourcePath.data).data);
 
-  err = FileRead(&result.arena, sourcePath, &result.source);
+  err = FileRead(result.arena, sourcePath, &result.source);
   if (err != SUCCESS) {
-    LogError("FileRead: failed %d, for file %s", err, sourcePath->data);
+    LogError("FileRead: failed %d, for file %s", err, sourcePath.data);
     abort();
   }
 
   return result;
 }
 
-static void checkCompileErrors(GLuint shader, String *type) {
+static void checkCompileErrors(GLuint shader, String type) {
   i32 success;
   char infoLog[1024];
-  if (StrEqual(type, &S("PROGRAM"))) {
+  if (StrEq(type, S("PROGRAM"))) {
     glGetProgramiv(shader, GL_LINK_STATUS, &success);
     if (success) {
       return;
     }
 
     glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-    LogError("%s linking failed:\n %s", type->data, infoLog);
+    LogError("%s linking failed:\n %s", type.data, infoLog);
     abort();
   }
 
@@ -50,36 +50,36 @@ static void checkCompileErrors(GLuint shader, String *type) {
   }
 
   glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-  LogError("%s Shader compilation failed:\n %s", type->data, infoLog);
+  LogError("%s Shader compilation failed:\n %s", type.data, infoLog);
   abort();
 }
 
 u32 ShaderCreate(String vertexShaderPath, String fragmentShaderPath) {
-  ShaderSource vertexShaderSource = readShader(&vertexShaderPath);
-  ShaderSource fragmentShaderSource = readShader(&fragmentShaderPath);
+  ShaderSource vertexShaderSource = readShader(vertexShaderPath);
+  ShaderSource fragmentShaderSource = readShader(fragmentShaderPath);
 
   // NOTE: Compile Vertex Shader
   u32 vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShaderID, 1, (const char *const *)&vertexShaderSource.source.data, NULL);
   glCompileShader(vertexShaderID);
-  checkCompileErrors(vertexShaderID, &S("VERTEX"));
+  checkCompileErrors(vertexShaderID, S("VERTEX"));
 
   // NOTE: Compile Fragment Shader
   u32 fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragmentShaderID, 1, (const char *const *)&fragmentShaderSource.source.data, NULL);
   glCompileShader(fragmentShaderID);
-  checkCompileErrors(fragmentShaderID, &S("FRAGMENT"));
+  checkCompileErrors(fragmentShaderID, S("FRAGMENT"));
 
   // NOTE: Link Fragment Shader
   u32 shaderProgram = glCreateProgram();
   glAttachShader(shaderProgram, vertexShaderID);
   glAttachShader(shaderProgram, fragmentShaderID);
   glLinkProgram(shaderProgram);
-  checkCompileErrors(shaderProgram, &S("PROGRAM"));
+  checkCompileErrors(shaderProgram, S("PROGRAM"));
 
   // Clear state
-  ArenaFree(&vertexShaderSource.arena);
-  ArenaFree(&fragmentShaderSource.arena);
+  ArenaFree(vertexShaderSource.arena);
+  ArenaFree(fragmentShaderSource.arena);
   glDeleteShader(vertexShaderID);
   glDeleteShader(fragmentShaderID);
 

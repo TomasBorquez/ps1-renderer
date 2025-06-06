@@ -2,25 +2,25 @@
 
 Model InitModel(String path) {
   File stats;
-  errno_t err = FileStats(&path, &stats);
+  errno_t err = FileStats(path, &stats);
 
   Model result = {0};
-  Arena arenaFile = ArenaInit((stats.size * 2.5) + 1); // NULL Terminator
+  Arena *arenaFile = ArenaCreate((stats.size * 2.5) + 1); // NULL Terminator
 
   String objData;
-  err = FileRead(&arenaFile, &path, &objData);
+  err = FileRead(arenaFile, path, &objData);
   if (err != SUCCESS) {
     LogError("FileRead failed, %d", err);
     abort();
   }
 
-  Arena arenaLines = ArenaInit(stats.size * 6);
-  StringVector lines = StrSplit(&arenaLines, &objData, &S("\n"));
-  for (i32 i = 0; i < lines.length; i++) {
-    String *currLine = VecAt(lines, i);
+  Arena *arenaLines = ArenaCreate(stats.size * 6);
+  StringVector lines = StrSplit(arenaLines, objData, S("\n"));
+  for (size_t i = 0; i < lines.length; i++) {
+    String currLine = VecAt(lines, i);
 
-    if (currLine->data[0] == 'v' && currLine->data[1] == 't') {
-      StringVector verticesSplit = StrSplit(&arenaLines, currLine, &S(" "));
+    if (currLine.data[0] == 'v' && currLine.data[1] == 't') {
+      StringVector verticesSplit = StrSplit(arenaLines, currLine, S(" "));
 
       VecF2 vert = {0};
       // TODO: Instead of using 1/2/3 index to skip, find the first char with data and read from that
@@ -32,8 +32,8 @@ Model InitModel(String path) {
       continue;
     }
 
-    if (currLine->data[0] == 'v' && currLine->data[1] == 'n') {
-      StringVector vertexNormalsSplit = StrSplit(&arenaLines, currLine, &S(" "));
+    if (currLine.data[0] == 'v' && currLine.data[1] == 'n') {
+      StringVector vertexNormalsSplit = StrSplit(arenaLines, currLine, S(" "));
 
       VecF3 vertNormal = {0};
       // TODO: Instead of using 1/2/3 index to skip, find the first char with data and read from that
@@ -46,8 +46,8 @@ Model InitModel(String path) {
       continue;
     }
 
-    if (currLine->data[0] == 'v') {
-      StringVector verticesSplit = StrSplit(&arenaLines, currLine, &S(" "));
+    if (currLine.data[0] == 'v') {
+      StringVector verticesSplit = StrSplit(arenaLines, currLine, S(" "));
 
       VecF3 vert = {0};
       vert.x = strtod(verticesSplit.data[1].data, NULL);
@@ -59,10 +59,10 @@ Model InitModel(String path) {
       continue;
     }
 
-    if (currLine->data[0] == 'f') {
-      StringVector facesStringSplit = StrSplit(&arenaLines, currLine, &S(" "));
-      for (i32 j = 1; j < facesStringSplit.length; j++) {
-        StringVector facesSplit = StrSplit(&arenaLines, &facesStringSplit.data[j], &S("/"));
+    if (currLine.data[0] == 'f') {
+      StringVector facesStringSplit = StrSplit(arenaLines, currLine, S(" "));
+      for (size_t j = 1; j < facesStringSplit.length; j++) {
+        StringVector facesSplit = StrSplit(arenaLines, facesStringSplit.data[j], S("/"));
 
         VecI3 face = {0};
         face.x = strtol(facesSplit.data[0].data, NULL, 10) - 1; // NOTE: Obj indices start from one
@@ -79,8 +79,8 @@ Model InitModel(String path) {
   }
 
   VecFree(lines);
-  ArenaFree(&arenaFile);
-  ArenaFree(&arenaLines);
+  ArenaFree(arenaFile);
+  ArenaFree(arenaLines);
   return result;
 }
 

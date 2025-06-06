@@ -4,30 +4,30 @@
 i32 main() {
   StartBuild();
   {
-    CreateExecutable((ExecutableOptions){.output = "main", .flags = "-Wall -Wextra -ggdb -std=c23 -fdiagnostics-color=always"});
+    Executable exe = CreateExecutable((ExecutableOptions){.output = "main", .flags = "-Wall -Wextra -ggdb -std=c23"});
 
-    AddFile("./src/main.c");
-    AddFile("./src/model.c");
-    AddFile("./src/camera.c");
-    AddFile("./src/renderer.c");
-    AddFile("./src/objects/obj.c");
-    AddFile("./src/gl.c");
+    AddFile(exe, "./src/main.c");
+    AddFile(exe, "./src/model.c");
+    AddFile(exe, "./src/camera.c");
+    AddFile(exe, "./src/renderer.c");
+    AddFile(exe, "./src/gl.c");
+    AddFile(exe, "./src/objects/obj.c");
 
-    AddIncludePaths("./vendor/SDL3/include", "./vendor/SDL3_image/include");
-    AddLibraryPaths("./vendor/SDL3/lib", "./vendor/SDL3_image/lib");
+    AddIncludePaths(exe, "./vendor/SDL3/include", "./vendor/SDL3_image/include", "./vendor/base/");
+    AddLibraryPaths(exe, "./vendor/SDL3/lib", "./vendor/SDL3_image/lib");
 
-    AddIncludePaths("./vendor/assimp/include");
-    AddLibraryPaths("./vendor/assimp/lib");
+    AddIncludePaths(exe, "./vendor/assimp/include");
+    AddLibraryPaths(exe, "./vendor/assimp/lib");
 
-    AddIncludePaths("./vendor/cglm/", "./vendor/glew/include", "./src");
-    AddLibraryPaths("./vendor/glew/lib/Release/x64");
+    AddIncludePaths(exe, "./vendor/cglm/", "./vendor/glew/include", "./src");
+    AddLibraryPaths(exe, "./vendor/glew/lib/Release/x64");
 
-    LinkSystemLibraries("assimp", "SDL3", "SDL3_image", "glew32", "opengl32");
-    LinkSystemLibraries("user32", "gdi32", "shell32", "winmm", "setupapi", "version", "imm32", "ole32");
+    LinkSystemLibraries(exe, "assimp", "SDL3", "SDL3_image", "glew32", "opengl32");
+    LinkSystemLibraries(exe, "user32", "gdi32", "shell32", "winmm", "setupapi", "version", "imm32", "ole32");
 
-    String exePath = InstallExecutable();
-    RunCommand(exePath);
-    CreateCompileCommands();
+    InstallExecutable(exe);
+    RunCommand(exe.outputPath);
+    CreateCompileCommands(exe);
   }
   EndBuild();
 }

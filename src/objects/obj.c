@@ -16,9 +16,9 @@ static VectorTexture loadMaterialTextures(Model *model, struct aiMaterial *mat, 
     snprintf(fullPath, sizeof(fullPath), "%s/%s", model->directory, str.data);
 
     bool skip = false;
-    for (i32 j = 0; j < model->texturesLoaded.length; j++) {
-      if (strcmp(VecAt(model->texturesLoaded, j)->path, str.data) == 0) {
-        VecPush(textures, *VecAt(model->texturesLoaded, j));
+    for (size_t j = 0; j < model->texturesLoaded.length; j++) {
+      if (strcmp(VecAt(model->texturesLoaded, j).path, str.data) == 0) {
+        VecPush(textures, VecAt(model->texturesLoaded, j));
         skip = true;
         break;
       }
@@ -47,10 +47,10 @@ static Mesh meshCreate(VectorVertex vertices, VectorU32 indices, VectorTexture t
 
   glBindVertexArray(mesh.VAO);
   glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
-  glBufferData(GL_ARRAY_BUFFER, mesh.vertices.length * sizeof(Vertex), VecAt(mesh.vertices, 0), GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, mesh.vertices.length * sizeof(Vertex), VecAtPtr(mesh.vertices, 0), GL_STATIC_DRAW);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * sizeof(u32), VecAt(mesh.indices, 0), GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * sizeof(u32), VecAtPtr(mesh.indices, 0), GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, position));
@@ -108,13 +108,13 @@ static Mesh processMesh(Model *model, struct aiMesh *mesh, const struct aiScene 
   if (mesh->mMaterialIndex >= 0) {
     struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
     VectorTexture diffuseMaps = loadMaterialTextures(model, material, aiTextureType_DIFFUSE, "texture_diffuse");
-    for (i32 i = 0; i < diffuseMaps.length; i++) {
-      VecPush(textures, *VecAt(diffuseMaps, i));
+    for (size_t i = 0; i < diffuseMaps.length; i++) {
+      VecPush(textures, VecAt(diffuseMaps, i));
     }
 
     VectorTexture specularMaps = loadMaterialTextures(model, material, aiTextureType_SPECULAR, "texture_specular");
-    for (i32 i = 0; i < specularMaps.length; i++) {
-      VecPush(textures, *VecAt(specularMaps, i));
+    for (size_t i = 0; i < specularMaps.length; i++) {
+      VecPush(textures, VecAt(specularMaps, i));
     }
   }
 
@@ -124,7 +124,8 @@ static Mesh processMesh(Model *model, struct aiMesh *mesh, const struct aiScene 
 static void processNode(struct aiNode *node, const struct aiScene *scene, Model *model) {
   for (u32 i = 0; i < node->mNumMeshes; i++) {
     struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    VecPush(model->meshes, processMesh(model, mesh, scene));
+    Mesh tempMesh = processMesh(model, mesh, scene);
+    VecPush(model->meshes, tempMesh);
   }
 
   for (u32 i = 0; i < node->mNumChildren; i++) {
@@ -145,12 +146,12 @@ Model LoadModel(char *path, char *directory) {
 void MeshDraw(Mesh *mesh, Object *obj) {
   u32 diffuseCount = 1;
   u32 specularCount = 1;
-  for (i32 i = 0; i < mesh->textures.length; i++) {
+  for (size_t i = 0; i < mesh->textures.length; i++) {
     char name[42] = "";
     glActiveTexture(GL_TEXTURE0 + i);
 
     i32 number = 0;
-    char *type = (VecAt(mesh->textures, i))->type;
+    char *type = (VecAt(mesh->textures, i)).type;
 
     if (strcmp(type, "texture_diffuse")) {
       number = diffuseCount++;
@@ -162,7 +163,7 @@ void MeshDraw(Mesh *mesh, Object *obj) {
     snprintf(name, 42, "material.%s%d", type, number);
 
     ShaderSetI(obj->shaderID, name, i);
-    glBindTexture(GL_TEXTURE_2D, (VecAt(mesh->textures, i))->id);
+    glBindTexture(GL_TEXTURE_2D, (VecAt(mesh->textures, i)).id);
   }
 
   glBindVertexArray(mesh->VAO);

@@ -1,3 +1,10 @@
+CompileFlags:
+  Add: [
+    -std=c99, -Wall, -Wextra, -Wno-macro-redefined, 
+    -Wno-incompatible-pointer-types-discards-qualifiers,
+    -DBASE_IMPLEMENTATION, -DMATE_IMPLEMENTATION
+  ]
+
 CompilationDatabase:
   Path: ./build/compile_commands.json
 

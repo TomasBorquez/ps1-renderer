@@ -4,9 +4,7 @@
 #include <SDL3_image/SDL_image.h>
 #include <cglm.h>
 
-#include "base.h"
 #include "gl.h"
-#include "obj.h"
 
 Object LightObjCreate() {
   Object result = {0};
