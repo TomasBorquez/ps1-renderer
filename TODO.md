@@ -1,5 +1,6 @@
 # TODOS
-[x] - abstract and create a `camera.c`
-[x] - abstract and create a `texture_box.c`
-[x] - update `base.h`, `mate.h` and `mate.c` script
+[x] - Abstract and create a `camera.c`
+[x] - Abstract and create a `texture_box.c`
+[x] - Update `base.h`, `mate.h` and `mate.c` script
+[ ] - Copy DLLs into `build` folder since we have to do it manually, use `FileCopy`
 
