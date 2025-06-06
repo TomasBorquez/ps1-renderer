@@ -116,8 +116,8 @@ void ShaderSetVecF2(u32 id, const char *name, vec2 value) {
   glUniform2f(uniformLocation, value[0], value[1]);
 }
 
-void ShaderSetB(u32 id, const char *name, bool value) {
-  i32 uniformLocation = glGetUniformLocation(id, name);
+void ShaderSetB(Object *obj, const char *name, bool value) {
+  i32 uniformLocation = glGetUniformLocation(obj->shaderID, name);
   assert(uniformLocation != -1 && "UniformLocation does not exist");
   glUniform1i(uniformLocation, value);
 }
@@ -135,8 +135,7 @@ void ShaderSetF(Object *obj, const char *name, f32 value) {
   glUniform1f(uniformLocation, value);
 }
 
-// TODO: GL_RGBA for PNG, and GL_RGB for JPEG, we should detect it automatically on the path, assert that its a known extension too
-u32 ShaderCreateTexture(char *texturePath, bool png) {
+u32 ShaderCreateTexture(char *texturePath) {
   u32 texture;
   SDL_Surface *imgTexture = IMG_Load(texturePath);
   assert(imgTexture != NULL && "Texture image failed to load");
@@ -146,19 +145,21 @@ u32 ShaderCreateTexture(char *texturePath, bool png) {
 
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
-
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  if (png) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgTexture->pixels);
-    glGenerateMipmap(GL_TEXTURE_2D);
+  // Auto-detect format based on bytes per pixel
+  GLenum format;
+  if (imgTexture->format == SDL_PIXELFORMAT_RGBA32 || imgTexture->format == SDL_PIXELFORMAT_ARGB32 || imgTexture->format == SDL_PIXELFORMAT_BGRA32 || imgTexture->format == SDL_PIXELFORMAT_ABGR32) {
+    format = GL_RGBA;
   } else {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, GL_RGB, GL_UNSIGNED_BYTE, imgTexture->pixels);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    format = GL_RGB;
   }
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, format, GL_UNSIGNED_BYTE, imgTexture->pixels);
+  glGenerateMipmap(GL_TEXTURE_2D);
 
   SDL_DestroySurface(imgTexture);
   return texture;

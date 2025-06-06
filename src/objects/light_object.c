@@ -6,7 +6,7 @@
 
 #include "base.h"
 #include "gl.h"
-#include "object.h"
+#include "obj.h"
 
 Object LightObjCreate() {
   Object result = {0};

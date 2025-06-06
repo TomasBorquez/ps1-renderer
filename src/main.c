@@ -15,6 +15,7 @@
 #include "camera.h"
 #include "renderer.h"
 
+#include "objects/model_object.c"
 #include "objects/texture_object.c"
 #include "objects/light_object.c"
 
@@ -38,8 +39,8 @@ i32 main() {
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(renderer.camera.fov), 800.0f / 800.0f, 0.1f, 100.0f, projection);
 
-  Object textObj = TextureObjCreate();
-  ShaderSetMat4(&textObj, "projection", projection);
+  Object modelObj = ModelObjCreate("./resources/backpack/backpack.obj", "./resources/backpack/");
+  ShaderSetMat4(&modelObj, "projection", projection);
 
   Object lightObj = LightObjCreate();
   ShaderSetMat4(&lightObj, "projection", projection);
@@ -56,45 +57,58 @@ i32 main() {
       // LightObj
       LightObjUse(&lightObj, view);
       mat4 lightModel = GLM_MAT4_IDENTITY_INIT;
-      // vec3 lightPos = {0.0f, 0.0f, 5.0f};
-      vec3 lightPos = {sin(currTime) * 5, 0.0f, 5.0f};
+      vec3 lightPos = {sin(currTime * 2), 0.0f, 3.0f};
 
       glm_translate(lightModel, lightPos);
       glm_scale(lightModel, (vec3){0.2f, 0.2f, 0.2f});
       LightObjDraw(&lightObj, lightModel);
 
-      // TextureObj
-      TextureObjUse(&textObj, view);
-      for (size_t i = 0; i < sizeof(cubePositions) / sizeof(vec3); i++) {
-        vec3 *currCube = &cubePositions[i];
-        mat4 staticModel = GLM_MAT4_IDENTITY_INIT;
+      { // ModelObj
+        ModelObjUse(&modelObj, view);
 
-        glm_translate(staticModel, *currCube);
-        glm_rotate(staticModel, currTime + i, (vec3){1.0f, 0.3f, 0.5f});
+        // View uniform
+        ShaderSetVecF3(&modelObj, "viewPos", renderer.camera.position);
 
-        ShaderSetVecF3(&textObj, "light.position", renderer.camera.position);
-        ShaderSetVecF3(&textObj, "light.direction", renderer.camera.front);
-        ShaderSetF(&textObj, "light.cutOff", cos(glm_rad(25)));
-        ShaderSetF(&textObj, "light.outerCutOff", cos(glm_rad(35)));
+        // Spotlight uniform
+        ShaderSetVecF3(&modelObj, "spotLight.position", renderer.camera.position);
+        ShaderSetVecF3(&modelObj, "spotLight.direction", renderer.camera.front);
+        ShaderSetF(&modelObj, "spotLight.cutOff", cos(glm_rad(25)));
+        ShaderSetF(&modelObj, "spotLight.outerCutOff", cos(glm_rad(35)));
 
-        ShaderSetVecF3(&textObj, "light.ambient", (vec3){0.2f, 0.2f, 0.2f});
-        ShaderSetVecF3(&textObj, "light.diffuse", (vec3){0.5f, 0.5f, 0.5f});
-        ShaderSetVecF3(&textObj, "light.specular", (vec3){1.0f, 1.0f, 1.0f});
+        ShaderSetVecF3(&modelObj, "spotLight.ambient", (vec3){0.2f, 0.2f, 0.2f});
+        ShaderSetVecF3(&modelObj, "spotLight.diffuse", (vec3){0.5f, 0.5f, 0.5f});
+        ShaderSetVecF3(&modelObj, "spotLight.specular", (vec3){1.0f, 1.0f, 1.0f});
 
-        ShaderSetF(&textObj, "light.linear", 0.09f);
-        ShaderSetF(&textObj, "light.quadratic", 0.032f);
+        ShaderSetF(&modelObj, "spotLight.linear", 0.09f);
+        ShaderSetF(&modelObj, "spotLight.quadratic", 0.032f);
 
-        ShaderSetF(&textObj, "material.shininess", 32.0f);
+        ShaderSetB(&modelObj, "spotLight.isActive", true);
 
-        ShaderSetVecF3(&textObj, "viewPos", renderer.camera.position);
+        // PointLight uniform
+        ShaderSetVecF3(&modelObj, "pointLight.position", lightPos);
 
-        TextureObjDraw(&textObj, staticModel);
+        ShaderSetF(&modelObj, "pointLight.linear", 0.09f);
+        ShaderSetF(&modelObj, "pointLight.quadratic", 0.032f);
+
+        ShaderSetVecF3(&modelObj, "pointLight.ambient", (vec3){0.5f, 0.3f, 0.3f});
+        ShaderSetVecF3(&modelObj, "pointLight.specular", (vec3){0.5f, 0.3f, 0.3f});
+        ShaderSetVecF3(&modelObj, "pointLight.diffuse", (vec3){0.5f, 0.5f, 0.5f});
+
+        ShaderSetB(&modelObj, "pointLight.isActive", true);
+
+        // Material
+        ShaderSetF(&modelObj, "material.shininess", 32.0f);
+
+        mat4 model = GLM_MAT4_IDENTITY_INIT;
+        glm_translate(model, (vec3){0.0, 0.0, 2.0f});
+        glm_scale(model, (vec3){0.25f, 0.25f, 0.25f});
+        ModelObjDraw(&modelObj, model);
       }
     }
     EndDrawing();
   }
 
-  TextureObjDestroy(&textObj);
-  LightObjDestroy(&lightObj);
+  ModelObjDestroy(&modelObj);
+  // LightObjDestroy(&lightObj);
   DestroyRenderer();
 }

@@ -10,15 +10,19 @@ i32 main() {
     AddFile("./src/model.c");
     AddFile("./src/camera.c");
     AddFile("./src/renderer.c");
+    AddFile("./src/objects/obj.c");
     AddFile("./src/gl.c");
 
     AddIncludePaths("./vendor/SDL3/include", "./vendor/SDL3_image/include");
     AddLibraryPaths("./vendor/SDL3/lib", "./vendor/SDL3_image/lib");
 
+    AddIncludePaths("./vendor/assimp/include");
+    AddLibraryPaths("./vendor/assimp/lib");
+
     AddIncludePaths("./vendor/cglm/", "./vendor/glew/include", "./src");
     AddLibraryPaths("./vendor/glew/lib/Release/x64");
 
-    LinkSystemLibraries("SDL3", "SDL3_image", "glew32", "opengl32");
+    LinkSystemLibraries("assimp", "SDL3", "SDL3_image", "glew32", "opengl32");
     LinkSystemLibraries("user32", "gdi32", "shell32", "winmm", "setupapi", "version", "imm32", "ole32");
 
     String exePath = InstallExecutable();

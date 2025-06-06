@@ -6,7 +6,7 @@
 
 #include "base.h"
 #include "gl.h"
-#include "object.h"
+#include "obj.h"
 
 Object TextureObjCreate() {
   Object result = {0};
@@ -55,10 +55,10 @@ Object TextureObjCreate() {
   glBindVertexArray(0);
 
   // Set texture
-  result.textures[0] = ShaderCreateTexture("./resources/container2.png", true);
+  result.textures[0] = ShaderCreateTexture("./resources/container2.png");
   ShaderSetI(result.shaderID, "material.diffuse", 0);
 
-  result.textures[1] = ShaderCreateTexture("./resources/container2_specular.png", true);
+  result.textures[1] = ShaderCreateTexture("./resources/container2_specular.png");
   ShaderSetI(result.shaderID, "material.specular", 1);
 
   return result;

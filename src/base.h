@@ -276,7 +276,7 @@ typedef struct {
 #define VecAt(vector, index)                                              \
   ({                                                                      \
     assert(index >= 0 && index < vector.length && "Index out of bounds"); \
-    &vector.data[index];                                                  \
+    (&vector.data[index]);                                                \
   })
 
 #define VecFree(vector)                                                \
