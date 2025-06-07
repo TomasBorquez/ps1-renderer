@@ -6,4 +6,5 @@
 - [x] Move to `Asserts`, move all to `Obj` 
 - [x] Create PointLight, SpotLight and DirLight
 - [x] Remove model loader
-
+- [x] Better errors
+- [ ] Add a system for importing inside GLSL, e.g. `#include "common/shadows.glsl"`, and it imports automatically from `./src/shaders/common/shadows.glsl`

@@ -18,7 +18,7 @@
 #include "objects/light_object.c"
 
 i32 main() {
-  InitRenderer(1800, 900);
+  InitRenderer(1000, 800);
 
   // Camera
   renderer.camera = CameraCreate((vec3){0.0f, 0.0f, 4.0f}, (vec3){0.0f, 1.0f, 0.0f}, -90.0f, 0.0f);
@@ -45,8 +45,8 @@ i32 main() {
 
   PointLight pointLight = {
     .position = {0.0f, 0.0f, 3.0f},
-    .ambient = {0.3f, 0.5f, 0.3f},
-    .specular = {0.3f, 0.5f, 0.3f},
+    .ambient = {0.7f, 0.3f, 0.3f},
+    .specular = {0.7f, 0.3f, 0.3f},
     .diffuse = {0.5f, 0.5f, 0.5f},
     .linear = 0.09f,
     .quadratic = 0.032f,
@@ -70,7 +70,6 @@ i32 main() {
       glm_translate(lightModel, pointLight.position);
       glm_scale(lightModel, (vec3){0.2f, 0.2f, 0.2f});
       LightObjDraw(&lightObj, lightModel);
-
       { // ModelObj
         ModelObjUse(&modelObj, view);
 
