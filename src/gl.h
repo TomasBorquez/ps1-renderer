@@ -1,5 +1,6 @@
 #pragma once
 #include <cglm.h>
+#include <assimp/scene.h>
 
 #include "base.h"
 #include "objects/obj.h"
@@ -54,3 +55,9 @@ void ShaderSetSpotLight(Object *obj, SpotLight *value);
 void ShaderSetPointLight(Object *obj, PointLight *value);
 
 u32 ShaderCreateTexture(char *texturePath);
+
+typedef struct {
+  f32 linear;
+  f32 quadratic;
+} AttenuationCoeffs;
+AttenuationCoeffs GetAttenuationCoeffs(i32 distance);

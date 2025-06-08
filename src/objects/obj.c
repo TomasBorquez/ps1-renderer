@@ -9,11 +9,10 @@
 
 static VectorTexture loadMaterialTextures(Model *model, struct aiMaterial *mat, enum aiTextureType type, char *typeName) {
   VectorTexture textures = {0};
+
   for (u32 i = 0; i < aiGetMaterialTextureCount(mat, type); i++) {
     struct aiString str;
     aiGetMaterialTexture(mat, type, i, &str, NULL, NULL, NULL, NULL, NULL, NULL);
-    char fullPath[512];
-    snprintf(fullPath, sizeof(fullPath), "%s/%s", model->directory, str.data);
 
     bool skip = false;
     for (size_t j = 0; j < model->texturesLoaded.length; j++) {
@@ -23,11 +22,15 @@ static VectorTexture loadMaterialTextures(Model *model, struct aiMaterial *mat, 
         break;
       }
     }
+
     if (!skip) {
       Texture texture;
+      char fullPath[512];
+      snprintf(fullPath, sizeof(fullPath), "%s/%s", model->directory, str.data);
       texture.id = ShaderCreateTexture(fullPath);
+
       texture.type = typeName;
-      texture.path = strdup(str.data); // TODO: Free on destroy
+      texture.path = strdup(str.data);
       VecPush(textures, texture);
       VecPush(model->texturesLoaded, texture);
     }
@@ -66,7 +69,7 @@ static Mesh meshCreate(VectorVertex vertices, VectorU32 indices, VectorTexture t
   return mesh;
 }
 
-static Mesh processMesh(Model *model, struct aiMesh *mesh, const struct aiScene *scene) {
+static Mesh processMesh(Model *model, struct aiMesh *mesh) {
   VectorVertex vertices = {0};
   VectorU32 indices = {0};
   VectorTexture textures = {0};
@@ -106,7 +109,7 @@ static Mesh processMesh(Model *model, struct aiMesh *mesh, const struct aiScene 
 
   // Process material
   if (mesh->mMaterialIndex >= 0) {
-    struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+    struct aiMaterial *material = model->scene->mMaterials[mesh->mMaterialIndex];
     VectorTexture diffuseMaps = loadMaterialTextures(model, material, aiTextureType_DIFFUSE, "texture_diffuse");
     for (size_t i = 0; i < diffuseMaps.length; i++) {
       VecPush(textures, VecAt(diffuseMaps, i));
@@ -121,25 +124,32 @@ static Mesh processMesh(Model *model, struct aiMesh *mesh, const struct aiScene 
   return meshCreate(vertices, indices, textures);
 }
 
-static void processNode(struct aiNode *node, const struct aiScene *scene, Model *model) {
+static void processNode(struct aiNode *node, Model *model) {
   for (u32 i = 0; i < node->mNumMeshes; i++) {
-    struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    Mesh tempMesh = processMesh(model, mesh, scene);
+    struct aiMesh *mesh = model->scene->mMeshes[node->mMeshes[i]];
+    Mesh tempMesh = processMesh(model, mesh);
     VecPush(model->meshes, tempMesh);
   }
 
   for (u32 i = 0; i < node->mNumChildren; i++) {
-    processNode(node->mChildren[i], scene, model);
+    processNode(node->mChildren[i], model);
   }
 }
 
+// WARNING: Sometimes UV flipping is not necessary
 Model LoadModel(char *path, char *directory) {
-  const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
-  assert(scene != NULL && "Scene should never be null");
+  // const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+  const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_CalcTangentSpace);
+  if (scene == NULL) {
+    const char *error = aiGetErrorString();
+    LogError("LoadModel: failed, scene should never be null, path %s and directory %s\n Assimp Error: %s\n", path, directory, error);
+    abort();
+  }
 
   Model result = {0};
   result.directory = directory;
-  processNode(scene->mRootNode, scene, &result);
+  result.scene = scene;
+  processNode(scene->mRootNode, &result);
   return result;
 }
 

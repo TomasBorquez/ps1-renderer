@@ -1,8 +1,8 @@
+#include "gl.h"
+
 #include <GL/glew.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3_image/SDL_image.h>
-
-#include "gl.h"
 
 typedef struct {
   String source;
@@ -178,7 +178,6 @@ u32 ShaderCreateTexture(char *texturePath) {
   SDL_Surface *imgTexture = IMG_Load(texturePath);
   Assert(imgTexture != NULL, "ShaderCreateTexture: texture image failed to load for path: %s", texturePath);
 
-  // NOTE: OpenGL has different y coords
   SDL_FlipSurface(imgTexture, SDL_FLIP_VERTICAL);
 
   glGenTextures(1, &texture);
@@ -189,16 +188,56 @@ u32 ShaderCreateTexture(char *texturePath) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   // Auto-detect format based on bytes per pixel
-  GLenum format;
+  GLenum format, internalFormat;
   if (imgTexture->format == SDL_PIXELFORMAT_RGBA32 || imgTexture->format == SDL_PIXELFORMAT_ARGB32 || imgTexture->format == SDL_PIXELFORMAT_BGRA32 || imgTexture->format == SDL_PIXELFORMAT_ABGR32) {
     format = GL_RGBA;
+    internalFormat = GL_RGBA; // Keep alpha in GPU memory
   } else {
     format = GL_RGB;
+    internalFormat = GL_RGB;
   }
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgTexture->w, imgTexture->h, 0, format, GL_UNSIGNED_BYTE, imgTexture->pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, imgTexture->w, imgTexture->h, 0, format, GL_UNSIGNED_BYTE, imgTexture->pixels);
   glGenerateMipmap(GL_TEXTURE_2D);
-
   SDL_DestroySurface(imgTexture);
   return texture;
+}
+
+AttenuationCoeffs GetAttenuationCoeffs(i32 distance) {
+  if (distance <= 7) {
+    return (AttenuationCoeffs){0.7f, 1.8f};
+  }
+  if (distance <= 13) {
+    return (AttenuationCoeffs){0.35f, 0.44f};
+  }
+  if (distance <= 20) {
+    return (AttenuationCoeffs){0.22f, 0.20f};
+  }
+  if (distance <= 32) {
+    return (AttenuationCoeffs){0.14f, 0.07f};
+  }
+  if (distance <= 50) {
+    return (AttenuationCoeffs){0.09f, 0.032f};
+  }
+  if (distance <= 65) {
+    return (AttenuationCoeffs){0.07f, 0.017f};
+  }
+  if (distance <= 100) {
+    return (AttenuationCoeffs){0.045f, 0.0075f};
+  }
+  if (distance <= 160) {
+    return (AttenuationCoeffs){0.027f, 0.0028f};
+  }
+  if (distance <= 200) {
+    return (AttenuationCoeffs){0.022f, 0.0019f};
+  }
+  if (distance <= 325) {
+    return (AttenuationCoeffs){0.014f, 0.0007f};
+  }
+  if (distance <= 600) {
+    return (AttenuationCoeffs){0.007f, 0.0002f};
+  }
+
+  // > 600
+  return (AttenuationCoeffs){0.0014f, 0.000007f};
 }

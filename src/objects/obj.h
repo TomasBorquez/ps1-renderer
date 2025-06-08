@@ -34,6 +34,7 @@ typedef struct {
   VectorTexture texturesLoaded;
   VectorMesh meshes;
   char *directory;
+  const struct aiScene *scene;
 } Model;
 
 typedef struct {

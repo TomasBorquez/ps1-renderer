@@ -104,6 +104,9 @@ typedef struct {
   f64 deltaTime;
   u64 performanceFrequency;
   u64 lastFrame;
+
+  // Flags
+  bool night;
 } Renderer;
 extern Renderer renderer;
 

@@ -8,3 +8,9 @@
 - [x] Remove model loader
 - [x] Better errors
 - [ ] Add a system for importing inside GLSL, e.g. `#include "common/shadows.glsl"`, and it imports automatically from `./src/shaders/common/shadows.glsl`
+    - [ ] shadows.glsl
+    - [ ] fog.glsl
+- [ ] Use UBOS for view uniform, fog, night, etc.
+- [ ] Make less GPU calls
+- [ ] Better GL abstractions
+- [ ] Optimal rendering, only render whats necessary

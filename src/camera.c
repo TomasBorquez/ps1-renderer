@@ -5,7 +5,7 @@ const f32 SENSITIVITY = 0.03f;
 const f32 YAW = -90.0f;
 const f32 PITCH = 0.0f;
 const f32 SPEED = 5.0f;
-const f32 ZOOM = 50.0f;
+const f32 ZOOM = 80.0f;
 
 static void cameraUpdateCameraVectors(Camera *camera) {
   camera->front[0] = cos(glm_rad(camera->yaw)) * cos(glm_rad(camera->pitch));

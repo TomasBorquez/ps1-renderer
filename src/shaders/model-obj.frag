@@ -57,6 +57,7 @@ struct Material {
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir);
+float LinearizeDepth(float depth);
 
 /* Uniforms */
 uniform DirLight dirLight;
@@ -67,10 +68,21 @@ uniform Material material;
 
 uniform vec3 viewPos;
 
+uniform bool fog;
+
+/* State */
+float near = 0.1;
+float far = 10.0;
+
 /* main */
 void main() {
   vec3 norm = normalize(Norm);
   vec3 viewDir = normalize(viewPos - FragPos);
+
+  vec4 textureColor = texture(material.texture_diffuse1, TextCoords);
+  if (textureColor.a <= 0.99) {
+    discard;
+  }
 
   vec3 result = vec3(0.0f);
   if (pointLight.isActive) {
@@ -81,6 +93,20 @@ void main() {
   }
   if (dirLight.isActive) {
     result += CalcDirLight(dirLight, norm, viewDir);
+  }
+
+  if (fog) {
+    float fogDensity = 3.0;
+    float depth = LinearizeDepth(gl_FragCoord.z);
+    float depthVec = exp(-pow(depth * fogDensity, 2.0));
+    vec3 fogColor = vec3(0.01, 0.01, 0.015);
+    result = mix(fogColor, result, depthVec);
+  } else {
+    float fogDensity = 3.0;
+    float depth = LinearizeDepth(gl_FragCoord.z);
+    float depthVec = exp(-pow(depth * fogDensity, 2.0));
+    vec3 fogColor = vec3(0.15, 0.1, 0.1);
+    result = mix(fogColor, result, depthVec);
   }
 
   FragColor = vec4(result, 1.0f);
@@ -174,4 +200,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir) {
   specular *= attenuation * intensity;
 
   return (ambient + diffuse + specular);
+}
+
+float LinearizeDepth(float depth) {
+  float z = depth * 2.0 - 1.0;
+  return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
 }

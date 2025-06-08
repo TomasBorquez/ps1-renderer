@@ -51,6 +51,9 @@ void InitOpenGL() {
   LogInfo("GLSL Version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   glViewport(0, 0, renderer.width, renderer.height);
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+  glDisable(GL_BLEND);
 }
 
 void InitRenderer(i32 width, i32 height) {
@@ -140,6 +143,14 @@ void HandleInput() {
   if (renderer.keys[SDL_SCANCODE_LCTRL]) {
     CameraProcessKeyboard(&renderer.camera, DOWN, renderer.deltaTime);
   }
+
+  if (renderer.keys[SDL_SCANCODE_F1]) {
+    renderer.night = true;
+  }
+
+  if (renderer.keys[SDL_SCANCODE_F2]) {
+    renderer.night = false;
+  }
 }
 
 void DestroyRenderer() {
@@ -149,8 +160,6 @@ void DestroyRenderer() {
 void ClearScreen(Color color) {
   glClearColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS);
 }
 
 void BeginDrawing() {

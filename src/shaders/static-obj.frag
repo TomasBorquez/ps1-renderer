@@ -22,22 +22,34 @@ uniform Light light;
 
 uniform vec3 viewPos;
 
+uniform bool fog;
+
+float LinearizeDepth(float depth);
+
+float near = 0.1;
+float far = 10.0;
 void main() {
-  // Ambient
-  vec3 ambient = light.ambient * material.ambient;
+  vec3 result = vec3(0.0);
 
-  // Diffuse
-  vec3 norm = normalize(Norm);
-  vec3 lightDir = normalize(light.position - FragPos);
-  float diff = max(dot(norm, lightDir), 0.0);
-  vec3 diffuse = light.diffuse * (diff * material.diffuse);
+  if (fog) {
+    float fogDensity = 3.0;
+    float depth = LinearizeDepth(gl_FragCoord.z);
+    float depthVec = exp(-pow(depth * fogDensity, 2.0));
+    vec3 fogColor = vec3(0.01, 0.01, 0.015);
+    result = mix(fogColor, result, depthVec);
+  } else {
+    result = vec3(0.3, 0.1, 0.1);
+    float fogDensity = 3.0;
+    float depth = LinearizeDepth(gl_FragCoord.z);
+    float depthVec = exp(-pow(depth * fogDensity, 2.0));
+    vec3 fogColor = vec3(0.15, 0.1, 0.1);
+    result = mix(fogColor, result, depthVec);
+  }
 
-  // Specular
-  vec3 viewDir = normalize(viewPos - FragPos);
-  vec3 reflectDir = reflect(-lightDir, norm);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-  vec3 specular = light.specular * (spec * material.specular);
+  FragColor = vec4(result, 1.0f);
+}
 
-  vec3 result = ambient + diffuse + specular;
-  FragColor = vec4(result, 1.0);
+float LinearizeDepth(float depth) {
+  float z = depth * 2.0 - 1.0;
+  return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
 }
