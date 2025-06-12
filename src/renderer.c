@@ -221,6 +221,5 @@ void EndDrawing() {
     renderer.FPS = renderer.frameCount / FPS_INTERVAL;
     renderer.frameCount = 0;
     renderer.lastFPSUpdate = currentTime;
-    LogInfo("FPS: %d", renderer.FPS);
   }
 }
