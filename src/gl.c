@@ -8,6 +8,7 @@ typedef struct {
   String source;
   Arena *arena;
 } ShaderSource;
+OpenGLContext GLContext = {0};
 
 static ShaderSource readShader(String sourcePath) {
   File stats;
@@ -34,158 +35,212 @@ static void checkCompileErrors(GLuint shader, String type, String *filePath) {
   i32 success;
   char infoLog[1024];
   if (StrEq(type, S("PROGRAM"))) {
-    glGetProgramiv(shader, GL_LINK_STATUS, &success);
+    GL(glGetProgramiv(shader, GL_LINK_STATUS, &success));
     if (success) {
       return;
     }
 
-    glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+    GL(glGetProgramInfoLog(shader, 1024, NULL, infoLog));
     LogError("%s linking failed:\n %s", type.data, infoLog);
     abort();
   }
 
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+  GL(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
   if (success) {
     return;
   }
 
-  glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+  GL(glGetShaderInfoLog(shader, 1024, NULL, infoLog));
   LogError("%s Shader compilation failed for file %s:\n %s", type.data, filePath->data, infoLog);
   abort();
 }
 
-u32 ShaderCreate(String vertexShaderPath, String fragmentShaderPath) {
+u32 GLCreateShader(String vertexShaderPath, String fragmentShaderPath) {
   ShaderSource vertexShaderSource = readShader(vertexShaderPath);
   ShaderSource fragmentShaderSource = readShader(fragmentShaderPath);
 
   // Compile Vertex Shader
   u32 vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShaderID, 1, (const char *const *)&vertexShaderSource.source.data, NULL);
-  glCompileShader(vertexShaderID);
+  GL(glShaderSource(vertexShaderID, 1, (const char *const *)&vertexShaderSource.source.data, NULL));
+  GL(glCompileShader(vertexShaderID));
   checkCompileErrors(vertexShaderID, S("VERTEX"), &vertexShaderPath);
 
   // Compile Fragment Shader
   u32 fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShaderID, 1, (const char *const *)&fragmentShaderSource.source.data, NULL);
-  glCompileShader(fragmentShaderID);
+  GL(glShaderSource(fragmentShaderID, 1, (const char *const *)&fragmentShaderSource.source.data, NULL));
+  GL(glCompileShader(fragmentShaderID));
   checkCompileErrors(fragmentShaderID, S("FRAGMENT"), &fragmentShaderPath);
 
   // Link Fragment Shader
   u32 shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertexShaderID);
-  glAttachShader(shaderProgram, fragmentShaderID);
-  glLinkProgram(shaderProgram);
+  GL(glAttachShader(shaderProgram, vertexShaderID));
+  GL(glAttachShader(shaderProgram, fragmentShaderID));
+  GL(glLinkProgram(shaderProgram));
   checkCompileErrors(shaderProgram, S("PROGRAM"), NULL);
 
   // Clear state
   ArenaFree(vertexShaderSource.arena);
   ArenaFree(fragmentShaderSource.arena);
-  glDeleteShader(vertexShaderID);
-  glDeleteShader(fragmentShaderID);
+  GL(glDeleteShader(vertexShaderID));
+  GL(glDeleteShader(fragmentShaderID));
 
   return shaderProgram;
 }
 
-void ShaderUse(u32 id) {
-  glUseProgram(id);
+void GLShaderUse(u32 id) {
+  if (GLContext.shaderID != id) {
+    GLContext.shaderID = id;
+    GL(glUseProgram(GLContext.shaderID));
+  }
 }
 
-u32 ShaderGetUniformLocation(Object *obj, const char *name) {
+void GLBindVAO(u32 id) {
+  if (GLContext.VAO != id) {
+    GLContext.VAO = id;
+    GL(glBindVertexArray(GLContext.VAO));
+  }
+}
+
+void GLBindVBO(u32 id) {
+  if (GLContext.VBO != id) {
+    GLContext.VBO = id;
+    GL(glBindBuffer(GL_ARRAY_BUFFER, GLContext.VBO));
+  }
+}
+
+void GLBindEBO(u32 id) {
+  GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id));
+}
+
+void GLBindUBO(u32 id) {
+  if (GLContext.UBO != id) {
+    GLContext.UBO = id;
+    GL(glBindBuffer(GL_UNIFORM_BUFFER, GLContext.UBO));
+  }
+}
+
+void GLUnbindShader() {
+  GLContext.shaderID = 0;
+  GL(glUseProgram(0));
+}
+
+void GLUnbindVAO() {
+  GLContext.VAO = 0;
+  GL(glBindVertexArray(0));
+}
+
+void GLUnbindVBO() {
+  GLContext.VBO = 0;
+  GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+}
+
+void GLUnbindEBO() {
+  // GLContext.EBO = 0;
+  GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+}
+
+void GLUnbindUBO() {
+  GLContext.UBO = 0;
+  GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+}
+
+// TODO: Free uniform data on destroy
+i32 GLGetUniformLocation(Object *obj, const char *name) {
   Assert(obj != NULL, "ShaderGetUniformLocation: Shader is not NULL, uniform name: %s", name);
-  ShaderUse(obj->shaderID);
+  GLShaderUse(obj->shaderID);
   i32 uniformLocation = glGetUniformLocation(obj->shaderID, name);
   Assert(uniformLocation != -1, "ShaderGetUniformLocation: failed, name: %s does not exist", name);
   return uniformLocation;
 }
 
-void ShaderSetMat4(Object *obj, const char *name, mat4 value) {
-  u32 uniformLocation = ShaderGetUniformLocation(obj, name);
-  glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, value[0]);
+void GLSetUniformMat4(Object *obj, const char *name, mat4 value) {
+  u32 uniformLocation = GLGetUniformLocation(obj, name);
+  GL(glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, value[0]));
 }
 
-void ShaderSetVecF4(Object *obj, const char *name, vec4 value) {
-  u32 uniformLocation = ShaderGetUniformLocation(obj, name);
-  glUniform4f(uniformLocation, value[0], value[1], value[2], value[3]);
+void GLSetUniformVecF4(Object *obj, const char *name, vec4 value) {
+  u32 uniformLocation = GLGetUniformLocation(obj, name);
+  GL(glUniform4f(uniformLocation, value[0], value[1], value[2], value[3]));
 }
 
-void ShaderSetVecF3(Object *obj, const char *name, vec3 value) {
-  u32 uniformLocation = ShaderGetUniformLocation(obj, name);
-  glUniform3f(uniformLocation, value[0], value[1], value[2]);
+void GLSetUniformVecF3(Object *obj, const char *name, vec3 value) {
+  u32 uniformLocation = GLGetUniformLocation(obj, name);
+  GL(glUniform3f(uniformLocation, value[0], value[1], value[2]));
 }
 
-void ShaderSetVecF2(Object *obj, const char *name, vec2 value) {
-  u32 uniformLocation = ShaderGetUniformLocation(obj, name);
-  glUniform2f(uniformLocation, value[0], value[1]);
+void GLSetUniformVecF2(Object *obj, const char *name, vec2 value) {
+  u32 uniformLocation = GLGetUniformLocation(obj, name);
+  GL(glUniform2f(uniformLocation, value[0], value[1]));
 }
 
-void ShaderSetB(Object *obj, const char *name, bool value) {
-  u32 uniformLocation = ShaderGetUniformLocation(obj, name);
-  glUniform1i(uniformLocation, value);
+void GLSetUniformB(Object *obj, const char *name, bool value) {
+  u32 uniformLocation = GLGetUniformLocation(obj, name);
+  GL(glUniform1i(uniformLocation, value));
 }
 
-void ShaderSetI(Object *obj, const char *name, i32 value) {
-  u32 uniformLocation = ShaderGetUniformLocation(obj, name);
-  glUniform1i(uniformLocation, value);
+void GLSetUniformI(Object *obj, const char *name, i32 value) {
+  u32 uniformLocation = GLGetUniformLocation(obj, name);
+  GL(glUniform1i(uniformLocation, value));
 }
 
-void ShaderSetF(Object *obj, const char *name, f32 value) {
-  u32 uniformLocation = ShaderGetUniformLocation(obj, name);
-  glUniform1f(uniformLocation, value);
+void GLSetUniformF(Object *obj, const char *name, f32 value) {
+  u32 uniformLocation = GLGetUniformLocation(obj, name);
+  GL(glUniform1f(uniformLocation, value));
 }
 
-void ShaderSetDirLight(Object *obj, DirLight *light) {
-  ShaderSetVecF3(obj, "dirLight.direction", light->direction);
+void GLSetUniformDirLight(Object *obj, DirLight *light) {
+  GLSetUniformVecF3(obj, "dirLight.direction", light->direction);
 
-  ShaderSetVecF3(obj, "dirLight.ambient", light->ambient);
-  ShaderSetVecF3(obj, "dirLight.diffuse", light->diffuse);
-  ShaderSetVecF3(obj, "dirLight.specular", light->specular);
+  GLSetUniformVecF3(obj, "dirLight.ambient", light->ambient);
+  GLSetUniformVecF3(obj, "dirLight.diffuse", light->diffuse);
+  GLSetUniformVecF3(obj, "dirLight.specular", light->specular);
 
-  ShaderSetB(obj, "dirLight.isActive", true);
+  GLSetUniformB(obj, "dirLight.isActive", true);
 }
 
-void ShaderSetSpotLight(Object *obj, SpotLight *light) {
-  ShaderSetVecF3(obj, "spotLight.position", light->position);
-  ShaderSetVecF3(obj, "spotLight.direction", light->direction);
+void GLSetUniformSpotLight(Object *obj, SpotLight *light) {
+  GLSetUniformVecF3(obj, "spotLight.position", light->position);
+  GLSetUniformVecF3(obj, "spotLight.direction", light->direction);
 
-  ShaderSetVecF3(obj, "spotLight.ambient", light->ambient);
-  ShaderSetVecF3(obj, "spotLight.diffuse", light->diffuse);
-  ShaderSetVecF3(obj, "spotLight.specular", light->specular);
+  GLSetUniformVecF3(obj, "spotLight.ambient", light->ambient);
+  GLSetUniformVecF3(obj, "spotLight.diffuse", light->diffuse);
+  GLSetUniformVecF3(obj, "spotLight.specular", light->specular);
 
-  ShaderSetF(obj, "spotLight.cutOff", light->cutOff);
-  ShaderSetF(obj, "spotLight.outerCutOff", light->outerCutOff);
+  GLSetUniformF(obj, "spotLight.cutOff", light->cutOff);
+  GLSetUniformF(obj, "spotLight.outerCutOff", light->outerCutOff);
 
-  ShaderSetF(obj, "spotLight.linear", light->linear);
-  ShaderSetF(obj, "spotLight.quadratic", light->quadratic);
+  GLSetUniformF(obj, "spotLight.linear", light->linear);
+  GLSetUniformF(obj, "spotLight.quadratic", light->quadratic);
 
-  ShaderSetB(obj, "spotLight.isActive", true);
+  GLSetUniformB(obj, "spotLight.isActive", true);
 }
 
-void ShaderSetPointLight(Object *obj, PointLight *light) {
-  ShaderSetVecF3(obj, "pointLight.position", light->position);
+void GLSetUniformPointLight(Object *obj, PointLight *light) {
+  GLSetUniformVecF3(obj, "pointLight.position", light->position);
 
-  ShaderSetVecF3(obj, "pointLight.ambient", light->ambient);
-  ShaderSetVecF3(obj, "pointLight.specular", light->specular);
-  ShaderSetVecF3(obj, "pointLight.diffuse", light->diffuse);
+  GLSetUniformVecF3(obj, "pointLight.ambient", light->ambient);
+  GLSetUniformVecF3(obj, "pointLight.specular", light->specular);
+  GLSetUniformVecF3(obj, "pointLight.diffuse", light->diffuse);
 
-  ShaderSetF(obj, "pointLight.linear", light->linear);
-  ShaderSetF(obj, "pointLight.quadratic", light->quadratic);
+  GLSetUniformF(obj, "pointLight.linear", light->linear);
+  GLSetUniformF(obj, "pointLight.quadratic", light->quadratic);
 
-  ShaderSetB(obj, "pointLight.isActive", true);
+  GLSetUniformB(obj, "pointLight.isActive", true);
 }
 
-u32 ShaderCreateTexture(char *texturePath) {
-  u32 texture;
+u32 GLCreateTexture(char *texturePath) {
+  u32 textureID;
   SDL_Surface *imgTexture = IMG_Load(texturePath);
-  Assert(imgTexture != NULL, "ShaderCreateTexture: texture image failed to load for path: %s", texturePath);
+  Assert(imgTexture != NULL, "GLCreateTexture: texture image failed to load for path: %s", texturePath);
 
   SDL_FlipSurface(imgTexture, SDL_FLIP_VERTICAL);
 
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  GL(glGenTextures(1, &textureID));
+  GL(glBindTexture(GL_TEXTURE_2D, textureID));
+  GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT));
+  GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT));
+  GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+  GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
   // Auto-detect format based on bytes per pixel
   GLenum format, internalFormat;
@@ -197,10 +252,25 @@ u32 ShaderCreateTexture(char *texturePath) {
     internalFormat = GL_RGB;
   }
 
-  glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, imgTexture->w, imgTexture->h, 0, format, GL_UNSIGNED_BYTE, imgTexture->pixels);
-  glGenerateMipmap(GL_TEXTURE_2D);
+  GL(glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, imgTexture->w, imgTexture->h, 0, format, GL_UNSIGNED_BYTE, imgTexture->pixels));
+  GL(glGenerateMipmap(GL_TEXTURE_2D));
   SDL_DestroySurface(imgTexture);
-  return texture;
+  return textureID;
+}
+
+void GLCreateUBOs(mat4 projection) {
+  GL(glGenBuffers(1, &GLContext.MatricesUBO));
+
+  GL(glBindBuffer(GL_UNIFORM_BUFFER, GLContext.MatricesUBO));
+  GL(glBufferData(GL_UNIFORM_BUFFER, sizeof(mat4) * 2, NULL, GL_STATIC_DRAW));
+  GL(glBindBufferBase(GL_UNIFORM_BUFFER, 0, GLContext.MatricesUBO));
+
+  GL(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(mat4), projection));
+}
+
+void GLUpdateView(mat4 view) {
+  GLBindUBO(GLContext.UBO);
+  GL(glBufferSubData(GL_UNIFORM_BUFFER, sizeof(mat4), sizeof(mat4), view));
 }
 
 AttenuationCoeffs GetAttenuationCoeffs(i32 distance) {

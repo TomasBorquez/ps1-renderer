@@ -27,7 +27,7 @@ static VectorTexture loadMaterialTextures(Model *model, struct aiMaterial *mat, 
       Texture texture;
       char fullPath[512];
       snprintf(fullPath, sizeof(fullPath), "%s/%s", model->directory, str.data);
-      texture.id = ShaderCreateTexture(fullPath);
+      texture.id = GLCreateTexture(fullPath);
 
       texture.type = typeName;
       texture.path = strdup(str.data);
@@ -44,28 +44,30 @@ static Mesh meshCreate(VectorVertex vertices, VectorU32 indices, VectorTexture t
   mesh.indices = indices;
   mesh.textures = textures;
 
-  glGenVertexArrays(1, &mesh.VAO);
-  glGenBuffers(1, &mesh.VBO);
-  glGenBuffers(1, &mesh.EBO);
+  GL(glGenVertexArrays(1, &mesh.VAO));
+  GL(glGenBuffers(1, &mesh.VBO));
+  GL(glGenBuffers(1, &mesh.EBO));
 
-  glBindVertexArray(mesh.VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
-  glBufferData(GL_ARRAY_BUFFER, mesh.vertices.length * sizeof(Vertex), VecAtPtr(mesh.vertices, 0), GL_STATIC_DRAW);
+  GLBindVAO(mesh.VAO);
+  GLBindVBO(mesh.VBO);
+  GL(glBufferData(GL_ARRAY_BUFFER, mesh.vertices.length * sizeof(Vertex), vertices.data, GL_STATIC_DRAW));
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * sizeof(u32), VecAtPtr(mesh.indices, 0), GL_STATIC_DRAW);
+  GLBindEBO(mesh.EBO);
+  GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * sizeof(u32), indices.data, GL_STATIC_DRAW));
 
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, position));
+  GL(glEnableVertexAttribArray(0));
+  GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, position)));
 
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal));
+  GL(glEnableVertexAttribArray(1));
+  GL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal)));
 
-  glEnableVertexAttribArray(2);
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texCoords));
+  GL(glEnableVertexAttribArray(2));
+  GL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texCoords)));
 
   // Unbind
-  glBindVertexArray(0);
+  GLUnbindVBO();
+  GLUnbindVAO();
+  GLUnbindEBO();
   return mesh;
 }
 
@@ -140,11 +142,7 @@ static void processNode(struct aiNode *node, Model *model) {
 Model LoadModel(char *path, char *directory) {
   // const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
   const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_CalcTangentSpace);
-  if (scene == NULL) {
-    const char *error = aiGetErrorString();
-    LogError("LoadModel: failed, scene should never be null, path %s and directory %s\n Assimp Error: %s\n", path, directory, error);
-    abort();
-  }
+  Assert(scene != NULL, "LoadModel: failed, scene should never be null, path %s and directory %s\n Assimp Error: %s\n", path, directory, aiGetErrorString());
 
   Model result = {0};
   result.directory = directory;
@@ -153,33 +151,33 @@ Model LoadModel(char *path, char *directory) {
   return result;
 }
 
+#define MESH_NAME_LENGTH 42
 void MeshDraw(Mesh *mesh, Object *obj) {
-  u32 diffuseCount = 1;
-  u32 specularCount = 1;
+  u32 diffuseCount = 0;
+  u32 specularCount = 0;
   for (size_t i = 0; i < mesh->textures.length; i++) {
-    char name[42] = "";
-    glActiveTexture(GL_TEXTURE0 + i);
+    char name[MESH_NAME_LENGTH] = "";
+    GL(glActiveTexture(GL_TEXTURE0 + i));
 
     i32 number = 0;
-    char *type = (VecAt(mesh->textures, i)).type;
-
-    if (strcmp(type, "texture_diffuse")) {
-      number = diffuseCount++;
-    } else if (strcmp(type, "texture_specular")) {
-      number = specularCount++;
+    char *type = VecAt(mesh->textures, i).type;
+    if (strcmp(type, "texture_diffuse") == 0) {
+      number = ++diffuseCount;
+    } else if (strcmp(type, "texture_specular") == 0) {
+      number = ++specularCount;
     } else {
-      assert(0 && "what?");
+      Assert(0, "MeshDraw: Failed, type %s does not exist", type);
     }
-    snprintf(name, 42, "material.%s%d", type, number);
+    snprintf(name, MESH_NAME_LENGTH, "material.%s%d", type, number);
 
-    ShaderSetI(obj, name, i);
-    glBindTexture(GL_TEXTURE_2D, (VecAt(mesh->textures, i)).id);
+    GLSetUniformI(obj, name, i);
+    GL(glBindTexture(GL_TEXTURE_2D, (VecAt(mesh->textures, i)).id));
   }
 
-  glBindVertexArray(mesh->VAO);
-  glDrawElements(GL_TRIANGLES, mesh->indices.length, GL_UNSIGNED_INT, 0);
+  GLBindVAO(mesh->VAO);
+  GL(glDrawElements(GL_TRIANGLES, mesh->indices.length, GL_UNSIGNED_INT, 0));
 
   // Cleanup
-  glBindVertexArray(0);
-  glActiveTexture(GL_TEXTURE0);
+  GLUnbindVAO();
+  GL(glActiveTexture(GL_TEXTURE0));
 }

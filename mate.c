@@ -1,14 +1,13 @@
 #define MATE_IMPLEMENTATION
 #include "mate.h"
-
 i32 main() {
   StartBuild();
   {
-    Executable exe = CreateExecutable((ExecutableOptions){.output = "main", .flags = "-Wall -Wextra -ggdb -std=c23"});
-
+    Executable exe = CreateExecutable((ExecutableOptions){.output = "main", .flags = "-Wall -Wextra -ggdb -std=c23 -DCIMGUI_USE_OPENGL3 -DCIMGUI_USE_SDL3 -DIMGUI_IMPL_OPENGL_LOADER_GL3W"});
     AddFile(exe, "./src/main.c");
     AddFile(exe, "./src/camera.c");
     AddFile(exe, "./src/renderer.c");
+    AddFile(exe, "./src/ui.c");
     AddFile(exe, "./src/gl.c");
     AddFile(exe, "./src/objects/obj.c");
 
@@ -21,15 +20,22 @@ i32 main() {
     AddIncludePaths(exe, "./vendor/glew/include");
     AddLibraryPaths(exe, "./vendor/glew/lib");
 
+    AddIncludePaths(exe, "./vendor/cimgui");
+    AddLibraryPaths(exe, "./vendor/cimgui/lib");
+
     AddIncludePaths(exe, "./src", "./vendor/base/", "./vendor/cglm/");
 
+    // Copy runtime DLLs
     FileCopy(S("./vendor/SDL3/bin/SDL3.dll"), S("./build/SDL3.dll"));
     FileCopy(S("./vendor/SDL3_image/bin/SDL3_image.dll"), S("./build/SDL3_image.dll"));
     FileCopy(S("./vendor/glew/bin/glew32.dll"), S("./build/glew32.dll"));
     FileCopy(S("./vendor/assimp/bin/assimp-vc143-mt.dll"), S("./build/assimp-vc143-mt.dll"));
 
-    LinkSystemLibraries(exe, "assimp", "SDL3", "SDL3_image", "glew32", "opengl32");
+    LinkSystemLibraries(exe, "assimp", "glew32", "opengl32");
+    LinkSystemLibraries(exe, "cimgui_sdl");
+    LinkSystemLibraries(exe, "SDL3", "SDL3_image");
     LinkSystemLibraries(exe, "user32", "gdi32", "shell32", "winmm", "setupapi", "version", "imm32", "ole32");
+    LinkSystemLibraries(exe, "stdc++");
 
     InstallExecutable(exe);
     RunCommand(exe.outputPath);

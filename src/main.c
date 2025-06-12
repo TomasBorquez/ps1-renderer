@@ -8,34 +8,27 @@
 #include <SDL3_image/SDL_image.h>
 #include <cglm.h>
 
-#include "gl.h"
-
 #include "camera.h"
 #include "renderer.h"
 #include "gl.h"
 
-#include "objects/static_object.c"
 #include "objects/model_object.c"
 #include "objects/light_object.c"
+#include "objects/skybox.c"
 
 i32 main() {
-  // InitRenderer(1600, 900);
   InitRenderer(1920, 1080);
 
   // Camera
   renderer.camera = CameraCreate((vec3){0.017333f, 0.347597f, -16.877054f}, (vec3){0.0f, 1.0f, 0.0f}, 90.0f, 0.0f);
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(renderer.camera.fov), (f32)renderer.width / (f32)renderer.height, 0.1f, 100.0f, projection);
+  GLCreateUBOs(projection);
 
   // Obj Creation
-  Object modelObj = ModelObjCreate("./resources/school_test/school_test.obj", "./resources/school_test");
-  ShaderSetMat4(&modelObj, "projection", projection);
-
+  Object modelObj = ModelObjCreate("./resources/school/school.obj", "./resources/school");
   Object lightObj = LightObjCreate();
-  ShaderSetMat4(&lightObj, "projection", projection);
-
-  Object skyBox = StaticObjCreate();
-  ShaderSetMat4(&skyBox, "projection", projection);
+  Object skyBox = SkyBoxCreate();
 
   // Lights
   AttenuationCoeffs attenuation = GetAttenuationCoeffs(50);
@@ -75,51 +68,52 @@ i32 main() {
     BeginDrawing();
     {
       ClearScreen(BLACK);
-      f32 currTime = (f32)SDL_GetTicks() / 1000;
 
       // View Mat
       mat4 view = GLM_MAT4_IDENTITY_INIT;
       CameraGetViewMatrix(&renderer.camera, view);
-
-      // LightObj
-      LightObjUse(&lightObj, view);
-      mat4 lightModel = GLM_MAT4_IDENTITY_INIT;
-      pointLight.position[2] = sin(currTime * 2) + 1.5;
-      ShaderSetVecF3(&lightObj, "lightColor", pointLight.ambient);
-
-      glm_translate(lightModel, pointLight.position);
-      glm_scale(lightModel, (vec3){0.2f, 0.2f, 0.2f});
-      // LightObjDraw(&lightObj, lightModel);
+      GLUpdateView(view);
       { // Sky Box
-        StaticObjUse(&skyBox, view);
-        ShaderSetB(&skyBox, "fog", !renderer.night);
+        SkyBoxUse(&skyBox);
+        GLSetUniformB(&skyBox, "isNight", !renderer.isNight);
 
         mat4 model = GLM_MAT4_IDENTITY_INIT;
         glm_scale(model, (vec3){70.0f, 50.0f, 70.0f});
-        StaticObjDraw(&skyBox, model);
+        SkyBoxDraw(&skyBox, model);
+      }
+      { // LightObj
+        f32 currTime = (f32)SDL_GetTicks() / 1000;
+        LightObjUse(&lightObj);
+        mat4 lightModel = GLM_MAT4_IDENTITY_INIT;
+        pointLight.position[2] = sin(currTime * 2) + 1.5;
+        GLSetUniformVecF3(&lightObj, "lightColor", pointLight.ambient);
+
+        glm_translate(lightModel, pointLight.position);
+        glm_scale(lightModel, (vec3){0.2f, 0.2f, 0.2f});
+        LightObjDraw(&lightObj, lightModel);
       }
       { // ModelObj
-        ModelObjUse(&modelObj, view);
+        ModelObjUse(&modelObj);
 
         // View uniform
-        ShaderSetVecF3(&modelObj, "viewPos", renderer.camera.position);
+        GLSetUniformVecF3(&modelObj, "viewPos", renderer.camera.position);
 
         // Dir Light
         glm_vec3_copy(renderer.camera.position, spotLight.position);
         glm_vec3_copy(renderer.camera.front, spotLight.direction);
-        ShaderSetB(&modelObj, "fog", !renderer.night);
-        if (renderer.night) {
-          ShaderSetDirLight(&modelObj, &dirLightEvening);
+        GLSetUniformB(&modelObj, "isNight", !renderer.isNight);
+        if (renderer.isNight) {
+          GLSetUniformDirLight(&modelObj, &dirLightEvening);
         } else {
-          ShaderSetDirLight(&modelObj, &dirLightNight);
-          ShaderSetSpotLight(&modelObj, &spotLight);
+          GLSetUniformDirLight(&modelObj, &dirLightNight);
+          GLSetUniformSpotLight(&modelObj, &spotLight);
         }
 
         // PointLight uniform
         // ShaderSetPointLight(&modelObj, &pointLight);
 
         // Material
-        ShaderSetF(&modelObj, "material.shininess", 32.0f);
+        GLSetUniformF(&modelObj, "material.shininess", 32.0f);
 
         mat4 model = GLM_MAT4_IDENTITY_INIT;
         glm_translate(model, (vec3){0.0, 0.0, 2.0f});

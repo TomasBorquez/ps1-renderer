@@ -9,19 +9,18 @@
 
 Object ModelObjCreate(char *path, char *directory) {
   Object result = {0};
-  result.shaderID = ShaderCreate(S("./src/shaders/model-obj.vert"), S("./src/shaders/model-obj.frag"));
-  ShaderUse(result.shaderID);
+  result.shaderID = GLCreateShader(S("./src/shaders/model-obj.vert"), S("./src/shaders/model-obj.frag"));
+  GLShaderUse(result.shaderID);
   result.model = LoadModel(path, directory);
   return result;
 }
 
-void ModelObjUse(Object *obj, mat4 view) {
-  ShaderUse(obj->shaderID);
-  ShaderSetMat4(obj, "view", view);
+void ModelObjUse(Object *obj) {
+  GLShaderUse(obj->shaderID);
 }
 
 void ModelObjDraw(Object *obj, mat4 modelMat) {
-  ShaderSetMat4(obj, "model", modelMat);
+  GLSetUniformMat4(obj, "model", modelMat);
 
   Model model = obj->model;
   for (size_t i = 0; i < model.meshes.length; i++) {
@@ -31,13 +30,13 @@ void ModelObjDraw(Object *obj, mat4 modelMat) {
 }
 
 void ModelObjDestroy(Object *obj) {
-  glDeleteProgram(obj->shaderID);
+  GL(glDeleteProgram(obj->shaderID));
 
   Model model = obj->model;
   for (size_t i = 0; i < model.meshes.length; i++) {
     Mesh *currMesh = VecAtPtr(model.meshes, i);
-    glDeleteVertexArrays(1, &currMesh->VAO);
-    glDeleteBuffers(1, &currMesh->VBO);
-    glDeleteBuffers(1, &currMesh->EBO);
+    GL(glDeleteVertexArrays(1, &currMesh->VAO));
+    GL(glDeleteBuffers(1, &currMesh->VBO));
+    GL(glDeleteBuffers(1, &currMesh->EBO));
   }
 }

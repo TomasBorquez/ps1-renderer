@@ -68,7 +68,7 @@ uniform Material material;
 
 uniform vec3 viewPos;
 
-uniform bool fog;
+uniform bool isNight;
 
 /* State */
 float near = 0.1;
@@ -80,7 +80,7 @@ void main() {
   vec3 viewDir = normalize(viewPos - FragPos);
 
   vec4 textureColor = texture(material.texture_diffuse1, TextCoords);
-  if (textureColor.a <= 0.99) {
+  if (textureColor.a < 0.9) {
     discard;
   }
 
@@ -95,7 +95,7 @@ void main() {
     result += CalcDirLight(dirLight, norm, viewDir);
   }
 
-  if (fog) {
+  if (isNight) {
     float fogDensity = 3.0;
     float depth = LinearizeDepth(gl_FragCoord.z);
     float depthVec = exp(-pow(depth * fogDensity, 2.0));
@@ -109,7 +109,7 @@ void main() {
     result = mix(fogColor, result, depthVec);
   }
 
-  FragColor = vec4(result, 1.0f);
+  FragColor = vec4(result, 1.0);
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
