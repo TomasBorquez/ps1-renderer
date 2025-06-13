@@ -1,5 +1,5 @@
-#version 460 core
-out vec4 FragColor;
+#ifndef LIGHT_SSBO_H
+#define LIGHT_SSBO_H
 
 /* Type Definitions */
 struct DirLight {
@@ -72,31 +72,4 @@ layout(std430, binding = 1) buffer LightingData {
   SpotLight spotLights[MAX_SPOT_LIGHTS];    // 96 * 4 = 384 bytes
   PointLight pointLights[MAX_POINT_LIGHTS]; // 80 * 10 = 800 bytes
 }; // Total: 1280 bytes
-
-float near = 0.1;
-float far = 10.0;
-float LinearizeDepth(float depth) {
-  float z = depth * 2.0 - 1.0;
-  return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
-}
-
-void main() {
-  vec3 result = vec3(0.0);
-
-  if (isNight == 1) {
-    float fogDensity = 3.0;
-    float depth = LinearizeDepth(gl_FragCoord.z);
-    float depthVec = exp(-pow(depth * fogDensity, 2.0));
-    vec3 fogColor = vec3(0.01, 0.01, 0.015);
-    result = mix(fogColor, result, depthVec);
-  } else {
-    result = vec3(0.3, 0.1, 0.1);
-    float fogDensity = 3.0;
-    float depth = LinearizeDepth(gl_FragCoord.z);
-    float depthVec = exp(-pow(depth * fogDensity, 2.0));
-    vec3 fogColor = vec3(0.15, 0.1, 0.1);
-    result = mix(fogColor, result, depthVec);
-  }
-
-  FragColor = vec4(result, 1.0f);
-}
+#endif

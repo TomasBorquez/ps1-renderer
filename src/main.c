@@ -23,7 +23,7 @@ i32 main() {
   renderer.camera = CameraCreate((vec3){0.017333f, 0.347597f, -16.877054f}, (vec3){0.0f, 1.0f, 0.0f}, 90.0f, 0.0f);
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(renderer.camera.fov), (f32)renderer.width / (f32)renderer.height, 0.1f, 100.0f, projection);
-  GLCreateUBOs(projection);
+  GLCreateSSBOs(projection);
 
   // Obj Creation
   Object modelObj = ModelObjCreate("./resources/school/school.obj", "./resources/school");
@@ -53,9 +53,9 @@ i32 main() {
 
   DirLight dirLightNight = {
     .direction = {-0.2f, -1.0f, -0.3f},
-    .ambient = {0.03f, 0.03f, 0.03f},
-    .specular = {0.03f, 0.03f, 0.03f},
-    .diffuse = {0.03f, 0.03f, 0.03f},
+    .ambient = {0.08f, 0.08f, 0.08f},
+    .specular = {0.08f, 0.08f, 0.08f},
+    .diffuse = {0.08f, 0.08f, 0.08f},
   };
 
   DirLight dirLightEvening = {
@@ -64,6 +64,8 @@ i32 main() {
     .specular = {0.4f,  0.3f,  0.3f },
     .diffuse = {0.4f,  0.3f,  0.3f },
   };
+
+  LightingData lightingData = {0};
   while (!renderer.quit) {
     BeginDrawing();
     {
@@ -73,46 +75,52 @@ i32 main() {
       mat4 view = GLM_MAT4_IDENTITY_INIT;
       CameraGetViewMatrix(&renderer.camera, view);
       GLUpdateView(view);
+
+      // LightingData
+      lightingData.numDirLights = 1;
+      lightingData.numPointLights = 1;
+
+      f32 currTime = (f32)SDL_GetTicks() / 1000;
+      pointLight.position[2] = sin(currTime * 2) + 1.5;
+
+      glm_vec3_copy(renderer.camera.position, lightingData.viewPos);
+      glm_vec3_copy(renderer.camera.position, spotLight.position);
+      glm_vec3_copy(renderer.camera.front, spotLight.direction);
+
+      if (renderer.isNight) {
+        lightingData.isNight = 1;
+        lightingData.dirLight = dirLightNight;
+
+        lightingData.numSpotLights = 1;
+        lightingData.spotLights[0] = spotLight;
+      } else {
+        lightingData.isNight = 0;
+        lightingData.dirLight = dirLightEvening;
+
+        lightingData.numSpotLights = 0;
+      }
+      lightingData.pointLights[0] = pointLight;
+
+      GLUpdateLightingSSBO(&lightingData);
+
       { // Sky Box
         SkyBoxUse(&skyBox);
-        GLSetUniformB(&skyBox, "isNight", !renderer.isNight);
 
         mat4 model = GLM_MAT4_IDENTITY_INIT;
         glm_scale(model, (vec3){70.0f, 50.0f, 70.0f});
         SkyBoxDraw(&skyBox, model);
       }
       { // LightObj
-        f32 currTime = (f32)SDL_GetTicks() / 1000;
         LightObjUse(&lightObj);
-        mat4 lightModel = GLM_MAT4_IDENTITY_INIT;
-        pointLight.position[2] = sin(currTime * 2) + 1.5;
         GLSetUniformVecF3(&lightObj, "lightColor", pointLight.ambient);
 
-        glm_translate(lightModel, pointLight.position);
-        glm_scale(lightModel, (vec3){0.2f, 0.2f, 0.2f});
-        LightObjDraw(&lightObj, lightModel);
+        mat4 model = GLM_MAT4_IDENTITY_INIT;
+        glm_translate(model, pointLight.position);
+        glm_scale(model, (vec3){0.2f, 0.2f, 0.2f});
+        LightObjDraw(&lightObj, model);
       }
       { // ModelObj
         ModelObjUse(&modelObj);
-
-        // View uniform
-        GLSetUniformVecF3(&modelObj, "viewPos", renderer.camera.position);
-
-        // Dir Light
-        glm_vec3_copy(renderer.camera.position, spotLight.position);
-        glm_vec3_copy(renderer.camera.front, spotLight.direction);
-        GLSetUniformB(&modelObj, "isNight", !renderer.isNight);
-        if (renderer.isNight) {
-          GLSetUniformDirLight(&modelObj, &dirLightEvening);
-        } else {
-          GLSetUniformDirLight(&modelObj, &dirLightNight);
-          GLSetUniformSpotLight(&modelObj, &spotLight);
-        }
-
-        // PointLight uniform
-        // ShaderSetPointLight(&modelObj, &pointLight);
-
-        // Material
         GLSetUniformF(&modelObj, "material.shininess", 32.0f);
 
         mat4 model = GLM_MAT4_IDENTITY_INIT;
@@ -124,6 +132,7 @@ i32 main() {
     EndDrawing();
   }
 
+  // Cleanup
   ModelObjDestroy(&modelObj);
   LightObjDestroy(&lightObj);
   DestroyRenderer();

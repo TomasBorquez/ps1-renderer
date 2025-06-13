@@ -5,7 +5,7 @@ layout(location = 1) in vec3 aNorm;
 out vec3 Norm;
 out vec3 FragPos;
 
-layout(std140, binding = 0) uniform Matrices {
+layout(std430, binding = 0) buffer Matrices {
   mat4 projection;
   mat4 view;
 };

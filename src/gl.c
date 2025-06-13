@@ -112,10 +112,10 @@ void GLBindEBO(u32 id) {
   GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id));
 }
 
-void GLBindUBO(u32 id) {
-  if (GLContext.UBO != id) {
-    GLContext.UBO = id;
-    GL(glBindBuffer(GL_UNIFORM_BUFFER, GLContext.UBO));
+void GLBindSSBO(u32 id) {
+  if (GLContext.SSBO != id) {
+    GLContext.SSBO = id;
+    GL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, GLContext.SSBO));
   }
 }
 
@@ -135,13 +135,7 @@ void GLUnbindVBO() {
 }
 
 void GLUnbindEBO() {
-  // GLContext.EBO = 0;
   GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-}
-
-void GLUnbindUBO() {
-  GLContext.UBO = 0;
-  GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 }
 
 // TODO: Free uniform data on destroy
@@ -188,46 +182,6 @@ void GLSetUniformF(Object *obj, const char *name, f32 value) {
   GL(glUniform1f(uniformLocation, value));
 }
 
-void GLSetUniformDirLight(Object *obj, DirLight *light) {
-  GLSetUniformVecF3(obj, "dirLight.direction", light->direction);
-
-  GLSetUniformVecF3(obj, "dirLight.ambient", light->ambient);
-  GLSetUniformVecF3(obj, "dirLight.diffuse", light->diffuse);
-  GLSetUniformVecF3(obj, "dirLight.specular", light->specular);
-
-  GLSetUniformB(obj, "dirLight.isActive", true);
-}
-
-void GLSetUniformSpotLight(Object *obj, SpotLight *light) {
-  GLSetUniformVecF3(obj, "spotLight.position", light->position);
-  GLSetUniformVecF3(obj, "spotLight.direction", light->direction);
-
-  GLSetUniformVecF3(obj, "spotLight.ambient", light->ambient);
-  GLSetUniformVecF3(obj, "spotLight.diffuse", light->diffuse);
-  GLSetUniformVecF3(obj, "spotLight.specular", light->specular);
-
-  GLSetUniformF(obj, "spotLight.cutOff", light->cutOff);
-  GLSetUniformF(obj, "spotLight.outerCutOff", light->outerCutOff);
-
-  GLSetUniformF(obj, "spotLight.linear", light->linear);
-  GLSetUniformF(obj, "spotLight.quadratic", light->quadratic);
-
-  GLSetUniformB(obj, "spotLight.isActive", true);
-}
-
-void GLSetUniformPointLight(Object *obj, PointLight *light) {
-  GLSetUniformVecF3(obj, "pointLight.position", light->position);
-
-  GLSetUniformVecF3(obj, "pointLight.ambient", light->ambient);
-  GLSetUniformVecF3(obj, "pointLight.specular", light->specular);
-  GLSetUniformVecF3(obj, "pointLight.diffuse", light->diffuse);
-
-  GLSetUniformF(obj, "pointLight.linear", light->linear);
-  GLSetUniformF(obj, "pointLight.quadratic", light->quadratic);
-
-  GLSetUniformB(obj, "pointLight.isActive", true);
-}
-
 u32 GLCreateTexture(char *texturePath) {
   u32 textureID;
   SDL_Surface *imgTexture = IMG_Load(texturePath);
@@ -246,7 +200,7 @@ u32 GLCreateTexture(char *texturePath) {
   GLenum format, internalFormat;
   if (imgTexture->format == SDL_PIXELFORMAT_RGBA32 || imgTexture->format == SDL_PIXELFORMAT_ARGB32 || imgTexture->format == SDL_PIXELFORMAT_BGRA32 || imgTexture->format == SDL_PIXELFORMAT_ABGR32) {
     format = GL_RGBA;
-    internalFormat = GL_RGBA; // Keep alpha in GPU memory
+    internalFormat = GL_RGBA;
   } else {
     format = GL_RGB;
     internalFormat = GL_RGB;
@@ -258,19 +212,31 @@ u32 GLCreateTexture(char *texturePath) {
   return textureID;
 }
 
-void GLCreateUBOs(mat4 projection) {
-  GL(glGenBuffers(1, &GLContext.MatricesUBO));
+void GLCreateSSBOs(mat4 projection) {
+  // Matrices
+  GL(glGenBuffers(1, &GLContext.MatricesSSBO));
+  GL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, GLContext.MatricesSSBO));
+  GL(glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(mat4) * 2, NULL, GL_STATIC_DRAW));
+  GL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, GLContext.MatricesSSBO));
+  GL(glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(mat4), projection));
 
-  GL(glBindBuffer(GL_UNIFORM_BUFFER, GLContext.MatricesUBO));
-  GL(glBufferData(GL_UNIFORM_BUFFER, sizeof(mat4) * 2, NULL, GL_STATIC_DRAW));
-  GL(glBindBufferBase(GL_UNIFORM_BUFFER, 0, GLContext.MatricesUBO));
-
-  GL(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(mat4), projection));
+  // Lighting
+  GL(glGenBuffers(1, &GLContext.LightingSSBO));
+  GL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, GLContext.LightingSSBO));
+  GL(glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(LightingData), NULL, GL_DYNAMIC_DRAW));
+  GL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, GLContext.LightingSSBO));
 }
 
 void GLUpdateView(mat4 view) {
-  GLBindUBO(GLContext.UBO);
-  GL(glBufferSubData(GL_UNIFORM_BUFFER, sizeof(mat4), sizeof(mat4), view));
+  GLBindSSBO(GLContext.MatricesSSBO);
+  GL(glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(mat4), sizeof(mat4), view));
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void GLUpdateLightingSSBO(LightingData *lightingData) {
+  GLBindSSBO(GLContext.LightingSSBO);
+  GL(glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(LightingData), lightingData));
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 AttenuationCoeffs GetAttenuationCoeffs(i32 distance) {
