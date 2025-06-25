@@ -8,10 +8,10 @@
 #include "shader.h"
 
 Object LightObjCreate() {
-  Object result = {0};
+  Object result = {.modelMat = GLM_MAT4_IDENTITY_INIT};
 
-  result.shaderID = GLCreateShader(S("light-obj.vert"), S("light-obj.frag"));
-  GLShaderUse(result.shaderID);
+  GLCreateShader(&result, S("light-obj.vert"), S("light-obj.frag"));
+  GLShaderUse(result.shader.id);
 
   f32 vertices[] = {
     -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,
@@ -38,17 +38,17 @@ Object LightObjCreate() {
 }
 
 void LightObjUse(Object *obj) {
-  GLShaderUse(obj->shaderID);
+  GLShaderUse(obj->shader.id);
   GLBindVAO(obj->VAO);
 }
 
-void LightObjDraw(Object *obj, mat4 model) {
-  GLSetUniformMat4(obj, "model", model);
+void LightObjDraw(Object *obj) {
+  GLSetUniformMat4(obj, "model", obj->modelMat);
   GL(glDrawArrays(GL_TRIANGLES, 0, 36));
 }
 
 void LightObjDestroy(Object *obj) {
   GL(glDeleteVertexArrays(1, &obj->VAO));
   GL(glDeleteBuffers(1, &obj->VBO));
-  GL(glDeleteProgram(obj->shaderID));
+  GL(glDeleteProgram(obj->shader.id));
 }

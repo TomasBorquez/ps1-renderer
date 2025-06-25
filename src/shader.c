@@ -86,52 +86,68 @@ static ShaderSource readShader(String sourcePath) {
   return result;
 }
 
-static void checkCompileErrors(GLuint shader, String type, String *filePath) {
+static errno_t checkCompileErrors(GLuint shader, String type, String *filePath) {
   i32 success;
   char infoLog[1024];
   if (StrEq(type, S("PROGRAM"))) {
     GL(glGetProgramiv(shader, GL_LINK_STATUS, &success));
     if (success) {
-      return;
+      return SUCCESS;
     }
 
     GL(glGetProgramInfoLog(shader, 1024, NULL, infoLog));
     LogError("%s linking failed:\n %s", type.data, infoLog);
-    abort();
+    return 1;
   }
 
   GL(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
   if (success) {
-    return;
+    return SUCCESS;
   }
 
   GL(glGetShaderInfoLog(shader, 1024, NULL, infoLog));
   LogError("%s Shader compilation failed for file %s:\n %s", type.data, filePath->data, infoLog);
-  abort();
+  return 1;
 }
 
-u32 GLCreateShader(String vertexShaderPath, String fragmentShaderPath) {
+void GLCreateShader(Object *obj, String vertexShaderPath, String fragmentShaderPath) {
   ShaderSource vertexShaderSource = readShader(vertexShaderPath);
   ShaderSource fragmentShaderSource = readShader(fragmentShaderPath);
+  errno_t err;
+
+  // Flags
+  bool isFirstTime = obj->shader.id == 0;
 
   // Compile Vertex Shader
   u32 vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
   GL(glShaderSource(vertexShaderID, 1, (const char *const *)&vertexShaderSource.source.data, NULL));
   GL(glCompileShader(vertexShaderID));
-  checkCompileErrors(vertexShaderID, S("VERTEX"), &vertexShaderPath);
+  err = checkCompileErrors(vertexShaderID, S("VERTEX"), &vertexShaderPath);
+  if (err != SUCCESS) {
+    Assert(!isFirstTime, "");
+    return;
+  }
 
   // Compile Fragment Shader
   u32 fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
   GL(glShaderSource(fragmentShaderID, 1, (const char *const *)&fragmentShaderSource.source.data, NULL));
   GL(glCompileShader(fragmentShaderID));
-  checkCompileErrors(fragmentShaderID, S("FRAGMENT"), &fragmentShaderPath);
+  err = checkCompileErrors(fragmentShaderID, S("FRAGMENT"), &fragmentShaderPath);
+  if (err != SUCCESS) {
+    Assert(!isFirstTime, "");
+    return;
+  }
 
   // Link Fragment Shader
   u32 shaderProgram = glCreateProgram();
   GL(glAttachShader(shaderProgram, vertexShaderID));
   GL(glAttachShader(shaderProgram, fragmentShaderID));
   GL(glLinkProgram(shaderProgram));
-  checkCompileErrors(shaderProgram, S("PROGRAM"), NULL);
+  err = checkCompileErrors(shaderProgram, S("PROGRAM"), NULL);
+  if (err != SUCCESS) {
+    Assert(!isFirstTime, "");
+    return;
+  }
 
   // Clear state
   ArenaFree(vertexShaderSource.arena);
@@ -139,5 +155,10 @@ u32 GLCreateShader(String vertexShaderPath, String fragmentShaderPath) {
   GL(glDeleteShader(vertexShaderID));
   GL(glDeleteShader(fragmentShaderID));
 
-  return shaderProgram;
+  // Assign
+  if (shaderProgram != 0) {
+    obj->shader.id = shaderProgram;
+    obj->shader.vertexPath = vertexShaderPath;
+    obj->shader.fragmentPath = fragmentShaderPath;
+  }
 }

@@ -36,7 +36,7 @@ void main() {
   vec3 fogColor;
   float fogDensity;
   if (isNight == 1) {
-    fogDensity = 3.0;
+    fogDensity = 4.0;
     fogColor = vec3(0.01, 0.01, 0.015);
   } else {
     fogDensity = 3.5;

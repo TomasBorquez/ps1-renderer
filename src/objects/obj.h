@@ -38,13 +38,32 @@ typedef struct {
 } Model;
 
 typedef struct {
-  u32 shaderID;
+  u32 id;
+  String vertexPath;
+  String fragmentPath;
+} Shader;
+
+typedef struct {
   u32 VAO;
   u32 VBO;
   u32 EBO;
-  u32 textures[16];
+  mat4 modelMat;
   Model model;
+  Shader shader;
 } Object;
 
-Model LoadModel(char *path, char *directory);
+Model LoadModel(String path);
 void MeshDraw(Mesh *mesh, Object *obj);
+
+typedef enum {
+  x,
+  y,
+  z,
+} Axis;
+void ObjRotate(Object *obj, f32 angle, Axis axis);
+
+void ObjTranslate(Object *obj, f32 x, f32 y, f32 z);
+
+void ObjScale(Object *obj, f32 x, f32 y, f32 z);
+
+void ObjModelMatReset(Object *obj);

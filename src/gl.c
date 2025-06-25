@@ -57,11 +57,12 @@ void GLUnbindEBO() {
   GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
-// TODO: Free uniform data on destroy
 i32 GLGetUniformLocation(Object *obj, const char *name) {
   Assert(obj != NULL, "ShaderGetUniformLocation: Shader is not NULL, uniform name: %s", name);
-  GLShaderUse(obj->shaderID);
-  i32 uniformLocation = glGetUniformLocation(obj->shaderID, name);
+  GLShaderUse(obj->shader.id);
+  i32 uniformLocation = glGetUniformLocation(obj->shader.id, name);
+  GL();
+
   Assert(uniformLocation != -1, "ShaderGetUniformLocation: failed, name: %s does not exist", name);
   return uniformLocation;
 }

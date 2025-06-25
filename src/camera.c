@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "renderer.h"
 
 // Default camera values
 const f32 SENSITIVITY = 0.03f;

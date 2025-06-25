@@ -1,6 +1,8 @@
 #define MATE_IMPLEMENTATION
 #include "mate.h"
 
+#define ERROR_COUNT 4
+
 i32 main() {
   StartBuild();
   {
@@ -12,6 +14,7 @@ i32 main() {
     AddFile(exe, "./src/gl.c");
     AddFile(exe, "./src/shader.c");
     AddFile(exe, "./src/objects/obj.c");
+    AddFile(exe, "./src/scenes/scene.c");
 
     AddIncludePaths(exe, "./vendor/SDL3/include", "./vendor/SDL3_image/include");
     AddLibraryPaths(exe, "./vendor/SDL3/lib", "./vendor/SDL3_image/lib");
@@ -27,8 +30,7 @@ i32 main() {
 
     AddIncludePaths(exe, "./src", "./vendor/base/", "./vendor/cglm/");
 
-// Copy runtime DLLs
-#define ERROR_COUNT 4
+    // Copy runtime DLLs
     errno_t errors[ERROR_COUNT];
     errors[0] = FileCopy(S("./vendor/SDL3/bin/SDL3.dll"), S("./build/SDL3.dll"));
     errors[1] = FileCopy(S("./vendor/SDL3_image/bin/SDL3_image.dll"), S("./build/SDL3_image.dll"));

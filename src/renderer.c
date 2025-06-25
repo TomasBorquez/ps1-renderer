@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "ui.h"
 #include "gl.h"
+#include "scenes/scene.h"
 
 #include <GL/glew.h>
 #include <SDL3/SDL_opengl.h>
@@ -135,6 +136,7 @@ void EventPoll() {
       ImGuiIO *io = igGetIO();
       if (!io->WantCaptureMouse) {
         SDL_MouseMotionEvent motion = renderer.e.motion;
+
         CameraProcessMouseMovement(&renderer.camera, motion.xrel, -motion.yrel);
       }
     }
@@ -146,6 +148,10 @@ void EventPoll() {
     if (renderer.e.type == SDL_EVENT_KEY_DOWN && !IsUIInputModeActive()) {
       if (renderer.e.key.key == SDLK_ESCAPE) {
         renderer.quit = true;
+      }
+
+      if (renderer.e.key.key == SDLK_F5) {
+        SceneUpdateShaders();
       }
 
       renderer.keys[renderer.e.key.scancode] = true;

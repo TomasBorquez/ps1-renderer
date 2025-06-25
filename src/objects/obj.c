@@ -139,10 +139,28 @@ static void processNode(struct aiNode *node, Model *model) {
 }
 
 // WARNING: Sometimes UV flipping is not necessary
-Model LoadModel(char *path, char *directory) {
-  // const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-  const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_CalcTangentSpace);
-  Assert(scene != NULL, "LoadModel: failed, scene should never be null, path %s and directory %s\n Assimp Error: %s\n", path, directory, aiGetErrorString());
+#define MAX_DIRECTORY_LENGTH 100
+Model LoadModel(String path) {
+  const struct aiScene *scene = aiImportFile(path.data, aiProcess_Triangulate | aiProcess_CalcTangentSpace /* | aiProcess_FlipUVs */);
+  Assert(scene != NULL, "LoadModel: failed, scene should never be null, path %s\n Assimp Error: %s\n", path.data, aiGetErrorString());
+
+  size_t lastIndex;
+  for (size_t i = 0; i < path.length; i++) {
+    if (path.data[i] == '/') {
+      lastIndex = i;
+    }
+  }
+
+  Assert(path.length < MAX_DIRECTORY_LENGTH, "LoadModel: failed, directory should not be > than directory limit, %d", 100);
+  char directory[MAX_DIRECTORY_LENGTH];
+  size_t directoryLength = 0;
+  for (size_t i = 0; i < lastIndex; i++) {
+    directory[directoryLength++] = path.data[i];
+  }
+  directory[directoryLength] = '\0';
+
+  LogInfo("path: %s", path.data);
+  LogInfo("directory: %s", directory);
 
   Model result = {0};
   result.directory = directory;
@@ -180,4 +198,32 @@ void MeshDraw(Mesh *mesh, Object *obj) {
   // Cleanup
   GLUnbindVAO();
   GL(glActiveTexture(GL_TEXTURE0));
+}
+
+void ObjModelMatReset(Object *obj) {
+  glm_mat4_copy((mat4)GLM_MAT4_IDENTITY_INIT, obj->modelMat);
+}
+
+void ObjRotate(Object *obj, f32 angle, Axis axis) {
+  vec3 axisVec;
+  switch (axis) {
+  case x:
+    axisVec[0] = 1;
+    break;
+  case y:
+    axisVec[1] = 1;
+    break;
+  case z:
+    axisVec[2] = 1;
+    break;
+  }
+  glm_rotate(obj->modelMat, angle, axisVec);
+}
+
+void ObjScale(Object *obj, f32 x, f32 y, f32 z) {
+  glm_scale(obj->modelMat, (vec3){x, y, z});
+}
+
+void ObjTranslate(Object *obj, f32 x, f32 y, f32 z) {
+  glm_translate(obj->modelMat, (vec3){x, y, z});
 }

@@ -6,10 +6,9 @@
 #include "shader.h"
 
 Object SkyBoxCreate() {
-  Object result = {0};
+  Object result = {.modelMat = GLM_MAT4_IDENTITY_INIT};
 
-  result.shaderID = GLCreateShader(S("skybox.vert"), S("skybox.frag"));
-  GLShaderUse(result.shaderID);
+  GLCreateShader(&result, S("skybox.vert"), S("skybox.frag"));
 
   f32 vertices[] = {-0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
                     0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, -0.5f, 0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
@@ -50,17 +49,17 @@ Object SkyBoxCreate() {
 }
 
 void SkyBoxUse(Object *obj) {
-  GLShaderUse(obj->shaderID);
+  GLShaderUse(obj->shader.id);
   GLBindVAO(obj->VAO);
 }
 
-void SkyBoxDraw(Object *obj, mat4 model) {
-  GLSetUniformMat4(obj, "model", model);
+void SkyBoxDraw(Object *obj) {
+  GLSetUniformMat4(obj, "model", obj->modelMat);
   GL(glDrawArrays(GL_TRIANGLES, 0, 36));
 }
 
 void SkyBoxDestroy(Object *obj) {
   GL(glDeleteVertexArrays(1, &obj->VAO));
   GL(glDeleteBuffers(1, &obj->VBO));
-  GL(glDeleteProgram(obj->shaderID));
+  GL(glDeleteProgram(obj->shader.id));
 }

@@ -60,6 +60,52 @@ void ProcessUIEvent(SDL_Event *event) {
   }
 }
 
+static void createTextCopyElement(char *displayText, char *copyText) {
+  if (igSelectable_Bool(displayText, false, 0, (ImVec2){0, 0})) {
+    igSetClipboardText(copyText);
+  }
+  if (igIsItemHovered(0)) {
+    igSetTooltip("Click to copy: %s", copyText);
+  }
+}
+
+static void DrawUI() {
+  igText("FPS: %d", renderer.FPS);
+  igText("Delta Time: %.3f ms", renderer.deltaTime * 1000.0);
+
+  igSeparator();
+
+  char displayText[256];
+  char copyText[256];
+  snprintf(displayText, sizeof(displayText), "Camera Position: {%.2f, %.2f, %.2f}", renderer.camera.position[0], renderer.camera.position[1], renderer.camera.position[2]);
+  snprintf(copyText, sizeof(copyText), "%.2ff, %.2ff, %.2ff", renderer.camera.position[0], renderer.camera.position[1], renderer.camera.position[2]);
+  createTextCopyElement(displayText, copyText);
+
+  snprintf(displayText, sizeof(displayText), "Camera Yaw: %.2f", renderer.camera.yaw);
+  snprintf(copyText, sizeof(copyText), "%.2ff", renderer.camera.yaw);
+  createTextCopyElement(displayText, copyText);
+
+  snprintf(displayText, sizeof(displayText), "Camera Pitch: %.2f", renderer.camera.pitch);
+  snprintf(copyText, sizeof(copyText), "%.2ff", renderer.camera.pitch);
+  createTextCopyElement(displayText, copyText);
+
+  igSeparator();
+
+  igCheckbox("Night Mode", &renderer.isNight);
+  igColorEdit3("Clear Color", (float *)&renderer.clearColor, 0);
+
+  igSeparator();
+
+  igText("Controls:");
+  igText("WASD - Move camera");
+  igText("Space/Ctrl - Up/Down");
+  igText("Mouse - Look around");
+  igText("F1/F2 - Toggle night mode");
+  igText("F3 - Toggle UI mode");
+  igText("F5 - Hot Reload Shaders");
+  igText("ESC - Quit");
+}
+
 void RenderUI(void) {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplSDL3_NewFrame();
@@ -72,27 +118,7 @@ void RenderUI(void) {
   }
 
   igBegin("Debug Info", &showDebugWindow, window_flags);
-  igText("FPS: %d", renderer.FPS);
-  igText("Delta Time: %.3f ms", renderer.deltaTime * 1000.0);
-  if (renderer.FPS > 0) {
-    igText("Frame Time: %.3f ms", 1000.0f / renderer.FPS);
-  }
-  igSeparator();
-  igText("Camera Position: (%.2f, %.2f, %.2f)", renderer.camera.position[0], renderer.camera.position[1], renderer.camera.position[2]);
-  igText("Camera Yaw: %.2f", renderer.camera.yaw);
-  igText("Camera Pitch: %.2f", renderer.camera.pitch);
-  igSeparator();
-  igCheckbox("Night Mode", &renderer.isNight);
-  igSeparator();
-  igColorEdit3("Clear Color", (float *)&renderer.clearColor, 0);
-  igSeparator();
-  igText("Controls:");
-  igText("WASD - Move camera");
-  igText("Space/Ctrl - Up/Down");
-  igText("Mouse - Look around");
-  igText("F1/F2 - Toggle night mode");
-  igText("F3 - Toggle UI mode");
-  igText("ESC - Quit");
+  { DrawUI(); }
   igEnd();
 
   igRender();

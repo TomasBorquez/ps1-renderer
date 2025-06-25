@@ -8,20 +8,22 @@
 #include "gl.h"
 #include "shader.h"
 
-Object ModelObjCreate(char *path, char *directory) {
-  Object result = {0};
-  result.shaderID = GLCreateShader(S("model-obj.vert"), S("model-obj.frag"));
-  GLShaderUse(result.shaderID);
-  result.model = LoadModel(path, directory);
+Object ModelObjCreate(String path) {
+  Object result = {.modelMat = GLM_MAT4_IDENTITY_INIT};
+  GLCreateShader(&result, S("model-obj.vert"), S("model-obj.frag"));
+  GLShaderUse(result.shader.id);
+  GLSetUniformF(&result, "material.shininess", 32.0f);
+
+  result.model = LoadModel(path);
   return result;
 }
 
 void ModelObjUse(Object *obj) {
-  GLShaderUse(obj->shaderID);
+  GLShaderUse(obj->shader.id);
 }
 
-void ModelObjDraw(Object *obj, mat4 modelMat) {
-  GLSetUniformMat4(obj, "model", modelMat);
+void ModelObjDraw(Object *obj) {
+  GLSetUniformMat4(obj, "model", obj->modelMat);
 
   Model model = obj->model;
   for (size_t i = 0; i < model.meshes.length; i++) {
@@ -31,7 +33,7 @@ void ModelObjDraw(Object *obj, mat4 modelMat) {
 }
 
 void ModelObjDestroy(Object *obj) {
-  GL(glDeleteProgram(obj->shaderID));
+  GL(glDeleteProgram(obj->shader.id));
 
   Model model = obj->model;
   for (size_t i = 0; i < model.meshes.length; i++) {

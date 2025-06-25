@@ -9,7 +9,7 @@
 - [x] Better errors
 - [x] Debug with `glDebugMessageCallback()`
 - [x] CImGUI for showing stuff
-- [x] Add a system for importing inside GLSL, e.g. `#include "common/shadows.glsl"`, and it imports automatically from `./src/shaders/common/shadows.glsl`
+- [x] Add a system for importing inside GLSL, e.g. `#include "common/shadows.glsl"`, and it imports automatically from `./src/shaders/`
     - [x] light_ssbo.glsl
     - [x] matrices_ssbo.glsl
     - [x] shadows.glsl
@@ -17,18 +17,37 @@
 - [ ] Make less GPU calls
     - [x] Use UBOS for view uniform, fog, night, etc.
     - [x] `UseShader` should check what shader we have bound at the moment, if same shader skip
-    - [x] HashMap for uniforms instead of so many GL calls - tried, didn't change much UBOS are better
+    - [x] HashMap for uniforms instead of so many GL calls - tried, didn't change much UBOS/SSBOs are better
     - [x] SSBOs instead, for lighting and matrices
     - [ ] Batch rendering
+- [x] Scene loader
+    - [x] Single `*.c` files in `./src/scenes`
+    - [x] Generic `SceneUpdate` to update view SSBO and light SSBO
+    - [x] Light abstractions, num of lights, an array, global SSBOs on `scene.c`
+    - [x] Object scale, rotate, translate
+    - [x] Object array in scene state,
+    - [x] Path from `.obj`
+- [x] Shader Hot Reload
+    - [x] Start with F5
+    - [x] If fails, show message but keep old shaders (abort if first time compiling)
+    - [x] Update ShaderID on each object array
 - [ ] Better GL abstractions, 
     - [x] Prefix with GL
     - [ ] SubData
-    - [ ] Gen VBOs, EBOs, etc
+    - [ ] Gen VBOs, EBOs, SSBOs
+    - [ ] Unbind SSBO, Texture
+    - [ ] Fog SSBO, color, density, background
+    - [ ] Particle system
 - [ ] Face Culling
-    - [ ] SkyBox 
+    - [ ] Single Color SkyBox, optional texture
     - [ ] Implement WBOIT for order agnostic blending
     - [ ] `glEnable` culling for objects that benefit, disable for those who dont
-- [ ] Optimal rendering, only render whats necessary
+- [ ] Optimal rendering, only render whats necessary (maybe tile system?)
+- [ ] Shaders 
+    - [ ] Better shadows
+    - [ ] PBR
+    - [ ] ...
 
 ## base.h
 - [ ] Simple HashMap implementation
+- [ ] Add `DEBUG` macro when `defined(__OPTIMIZE__)`

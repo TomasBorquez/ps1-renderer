@@ -130,9 +130,9 @@ typedef struct {
 AttenuationCoeffs GetAttenuationCoeffs(i32 distance);
 
 #if 1
-#  define GL(call)                                                                                        \
+
+#  define GL_ERROR_CHECK()                                                                                \
     do {                                                                                                  \
-      call;                                                                                               \
       GLenum error = glGetError();                                                                        \
       if (error != GL_NO_ERROR) {                                                                         \
         LogError("OpenGL Error at %s:%d in %s() - Error: 0x%x", __FILE__, __LINE__, __FUNCTION__, error); \
@@ -141,6 +141,14 @@ AttenuationCoeffs GetAttenuationCoeffs(i32 distance);
         while (glGetError() != GL_NO_ERROR) {}                                                            \
       }                                                                                                   \
     } while (0)
+
+#  define GL(call)      \
+    do {                \
+      call;             \
+      GL_ERROR_CHECK(); \
+    } while (0)
+
 #else
 #  define GL(call) call
+#  define GL_ERROR_CHECK()
 #endif
