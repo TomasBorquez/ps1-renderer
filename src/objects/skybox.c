@@ -3,11 +3,12 @@
 #include "base.h"
 #include "gl.h"
 #include "obj.h"
+#include "shader.h"
 
 Object SkyBoxCreate() {
   Object result = {0};
 
-  result.shaderID = GLCreateShader(S("./src/shaders/skybox.vert"), S("./src/shaders/skybox.frag"));
+  result.shaderID = GLCreateShader(S("skybox.vert"), S("skybox.frag"));
   GLShaderUse(result.shaderID);
 
   f32 vertices[] = {-0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
@@ -31,10 +32,8 @@ Object SkyBoxCreate() {
   GL(glGenVertexArrays(1, &result.VAO));
   GL(glGenBuffers(1, &result.VBO));
 
-  // GLBindVAO(result.VAO);
-  // GLBindVBO(result.VBO);
-  glBindVertexArray(result.VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, result.VBO);
+  GLBindVAO(result.VAO);
+  GLBindVBO(result.VBO);
   GL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
 
   GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(f32), NULL));

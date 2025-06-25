@@ -54,9 +54,9 @@ typedef struct {
   vec3 specular; // 12 bytes
   f32 linear;    // 4 bytes -> 16
 
-  f32 quadratic; // 4 bytes
-  vec3 _pad3;    // 12 bytes -> 16
-} PointLight;    // Total: 80 bytes
+  f32 quadratic;  // 4 bytes
+  float _pad3[3]; // 12 bytes -> 16
+} PointLight;     // Total: 80 bytes
 
 #define MAX_SPOT_LIGHTS 4
 #define MAX_POINT_LIGHTS 10
@@ -108,7 +108,6 @@ void GLBindSSBO(u32 id);
 
 /* Create */
 u32 GLCreateTexture(char *texturePath);
-u32 GLCreateShader(String vertexShaderPath, String fragmentShaderPath);
 void GLCreateSSBOs(mat4 projection);
 
 /* Update */

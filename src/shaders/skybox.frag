@@ -1,102 +1,27 @@
 #version 460 core
 out vec4 FragColor;
 
-/* Type Definitions */
-struct DirLight {
-  vec3 direction; // 12 bytes
-  float _pad0;    // 4 bytes -> total 16
+#include "./common/light_ssbo.glsl"
+#include "./common/fog.glsl"
 
-  vec3 ambient; // 12 bytes
-  float _pad1;  // 4 bytes -> total 16
-
-  vec3 diffuse; // 12 bytes
-  float _pad2;  // 4 bytes -> total 16
-
-  vec3 specular; // 12 bytes
-  float _pad3;   // 4 bytes -> total 16
-}; // Total: 64 bytes
-
-struct SpotLight {
-  vec3 position; // 12 bytes
-  float _pad0;   // 4 bytes -> 16
-
-  vec3 direction; // 12 bytes
-  float _pad1;    // 4 bytes -> 16
-
-  vec3 ambient; // 12 bytes
-  float _pad2;  // 4 bytes -> 16
-
-  vec3 diffuse; // 12 bytes
-  float _pad3;  // 4 bytes -> 16
-
-  vec3 specular; // 12 bytes
-  float cutOff;  // 4 bytes -> 16
-
-  float outerCutOff; // 4 bytes
-  float linear;      // 4 bytes
-  float quadratic;   // 4 bytes
-  float _pad4;       // 4 bytes -> 16
-}; // Total: 96 bytes
-
-struct PointLight {
-  vec3 position; // 12 bytes
-  float _pad0;   // 4 bytes -> 16
-
-  vec3 ambient; // 12 bytes
-  float _pad1;  // 4 bytes -> 16
-
-  vec3 diffuse; // 12 bytes
-  float _pad2;  // 4 bytes -> 16
-
-  vec3 specular; // 12 bytes
-  float linear;  // 4 bytes -> 16
-
-  float quadratic; // 4 bytes
-  vec3 _pad3;      // 12 bytes -> 16
-}; // Total: 80 bytes
-
-/* Uniforms */
-#define MAX_SPOT_LIGHTS 4
-#define MAX_POINT_LIGHTS 10
-layout(std430, binding = 1) buffer LightingData {
-  vec3 viewPos; // 12 bytes
-  float _pad0;  // 4 bytes -> 16
-
-  int isNight;        // 4 bytes
-  int numDirLights;   // 4 bytes
-  int numSpotLights;  // 4 bytes
-  int numPointLights; // 4 bytes -> 16
-
-  // Light data
-  DirLight dirLight;                        // 64 bytes
-  SpotLight spotLights[MAX_SPOT_LIGHTS];    // 96 * 4 = 384 bytes
-  PointLight pointLights[MAX_POINT_LIGHTS]; // 80 * 10 = 800 bytes
-}; // Total: 1280 bytes
-
-float near = 0.1;
-float far = 10.0;
-float LinearizeDepth(float depth) {
-  float z = depth * 2.0 - 1.0;
-  return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
-}
+/* Consts */
+const float near = 0.1;
+const float far = 10.0;
 
 void main() {
-  vec3 result = vec3(0.0);
-
+  vec3 result = vec3(0);
+  vec3 fogColor;
+  float fogDensity = 3.5;
   if (isNight == 1) {
-    float fogDensity = 3.0;
-    float depth = LinearizeDepth(gl_FragCoord.z);
-    float depthVec = exp(-pow(depth * fogDensity, 2.0));
-    vec3 fogColor = vec3(0.01, 0.01, 0.015);
-    result = mix(fogColor, result, depthVec);
+    fogDensity = 3.5;
+    fogColor = vec3(0.013, 0.013, 0.015);
   } else {
-    result = vec3(0.3, 0.1, 0.1);
-    float fogDensity = 3.0;
-    float depth = LinearizeDepth(gl_FragCoord.z);
-    float depthVec = exp(-pow(depth * fogDensity, 2.0));
-    vec3 fogColor = vec3(0.15, 0.1, 0.1);
-    result = mix(fogColor, result, depthVec);
+    fogDensity = 3.5;
+    fogColor = vec3(0.15, 0.1, 0.1);
   }
+  float depth = LinearizeDepth(gl_FragCoord.z, near, far);
+  float depthVec = exp(-pow(depth * fogDensity, 2.0));
+  result = mix(fogColor, result, depthVec);
 
   FragColor = vec4(result, 1.0f);
 }

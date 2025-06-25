@@ -42,10 +42,6 @@ void ProcessUIEvent(SDL_Event *event) {
     }
   }
 
-  if (uiInputMode) {
-    ImGui_ImplSDL3_ProcessEvent(event);
-  }
-
   if (event->type == SDL_EVENT_KEY_DOWN) {
     ImGuiIO *io = igGetIO();
     bool imguiWantsKeyboard = uiInputMode && io->WantCaptureKeyboard;
@@ -57,6 +53,10 @@ void ProcessUIEvent(SDL_Event *event) {
         renderer.isNight = false;
       }
     }
+  }
+
+  if (uiInputMode) {
+    ImGui_ImplSDL3_ProcessEvent(event);
   }
 }
 
@@ -79,7 +79,8 @@ void RenderUI(void) {
   }
   igSeparator();
   igText("Camera Position: (%.2f, %.2f, %.2f)", renderer.camera.position[0], renderer.camera.position[1], renderer.camera.position[2]);
-  igText("Camera Front: (%.2f, %.2f, %.2f)", renderer.camera.front[0], renderer.camera.front[1], renderer.camera.front[2]);
+  igText("Camera Yaw: %.2f", renderer.camera.yaw);
+  igText("Camera Pitch: %.2f", renderer.camera.pitch);
   igSeparator();
   igCheckbox("Night Mode", &renderer.isNight);
   igSeparator();

@@ -35,10 +35,15 @@ typedef struct {
   // FPS
   size_t frameCount;
   u32 lastFPSUpdate;
+
   i32 FPS;
   f64 deltaTime;
   u64 performanceFrequency;
   u64 lastFrame;
+
+  u32 targetFPS;
+  u64 targetFrameTime;
+  u64 frameStartTime;
 
   // Flags
   bool isNight;
@@ -48,6 +53,7 @@ typedef struct {
 extern Renderer renderer;
 
 void InitRenderer(i32 width, i32 height);
+void SetTargetFPS(u32 fps);
 
 void DestroyRenderer();
 void RendererQuit(errno_t code);

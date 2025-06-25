@@ -9,17 +9,17 @@
 - [x] Better errors
 - [x] Debug with `glDebugMessageCallback()`
 - [x] CImGUI for showing stuff
+- [x] Add a system for importing inside GLSL, e.g. `#include "common/shadows.glsl"`, and it imports automatically from `./src/shaders/common/shadows.glsl`
+    - [x] light_ssbo.glsl
+    - [x] matrices_ssbo.glsl
+    - [x] shadows.glsl
+    - [x] fog.glsl
 - [ ] Make less GPU calls
     - [x] Use UBOS for view uniform, fog, night, etc.
     - [x] `UseShader` should check what shader we have bound at the moment, if same shader skip
     - [x] HashMap for uniforms instead of so many GL calls - tried, didn't change much UBOS are better
     - [x] SSBOs instead, for lighting and matrices
     - [ ] Batch rendering
-- [ ] Add a system for importing inside GLSL, e.g. `#include "common/shadows.glsl"`, and it imports automatically from `./src/shaders/common/shadows.glsl`
-    - [x] light_ssbo.glsl
-    - [x] matrices_ssbo.glsl
-    - [x] shadows.glsl
-    - [x] fog.glsl
 - [ ] Better GL abstractions, 
     - [x] Prefix with GL
     - [ ] SubData

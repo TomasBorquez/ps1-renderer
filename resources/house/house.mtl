@@ -1,0 +1,98 @@
+# MTL file - created by a modified js OBJExporter
+
+newmtl WallsRoofFloorExtras
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.8040408206
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd WallsRoofFloorExtras.png
+
+newmtl LivingRoom.Alt
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd LivingRoom.Alt.png
+
+newmtl LivingRoom
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.7470177872
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd LivingRoom.Alt.png
+
+newmtl LivingRoomLamp
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.7470177872
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 1 1 1
+map_Kd LivingRoomLamp.png
+map_Ke LivingRoomLamp.png
+
+newmtl Cabet_Table
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.8211145618
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Cabet_Table.png
+
+newmtl Chair
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.8211145618
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Chair.png
+
+newmtl Table_Stuff
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.8211145618
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Table_Stuff.png
+
+newmtl OldLady
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.7470177872
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd OldLady.png

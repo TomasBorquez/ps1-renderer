@@ -114,6 +114,11 @@ void InitRenderer(i32 width, i32 height) {
   renderer.lastFPSUpdate = SDL_GetTicks();
 }
 
+void SetTargetFPS(u32 fps) {
+  renderer.targetFPS = fps;
+  renderer.targetFrameTime = renderer.performanceFrequency / fps;
+}
+
 void EventPoll() {
   while (SDL_PollEvent(&renderer.e) != 0) {
     ProcessUIEvent(&renderer.e);
@@ -204,17 +209,35 @@ void ClearScreen(Color color) {
 }
 
 void BeginDrawing() {
+  renderer.frameStartTime = SDL_GetPerformanceCounter();
+
   EventPoll();
   HandleInput();
+
   u64 currTime = SDL_GetPerformanceCounter();
   renderer.deltaTime = (f64)(currTime - renderer.lastFrame) / renderer.performanceFrequency;
   renderer.lastFrame = currTime;
+}
+
+static void limitFrameRate() {
+  if (renderer.targetFPS > 0) {
+    u64 targetEnd = renderer.frameStartTime + renderer.targetFrameTime;
+    while (SDL_GetPerformanceCounter() < targetEnd) {
+      // Busy wait
+    }
+  }
 }
 
 void EndDrawing() {
   RenderUI();
   SDL_GL_SwapWindow(renderer.window);
 
+  /* FPS Limiting */
+  if (renderer.targetFPS > 0) {
+    limitFrameRate();
+  }
+
+  /* FPS Counter */
   renderer.frameCount++;
   u32 currentTime = SDL_GetTicks();
   if (currentTime - renderer.lastFPSUpdate >= FPS_INTERVAL * 1000) {

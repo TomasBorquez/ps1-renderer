@@ -1,0 +1,313 @@
+# MTL file - created by a modified js OBJExporter
+
+newmtl automatic_ticket_gate
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd automatic_ticket_gate.png
+
+newmtl Chair
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Chair.png
+
+newmtl tile_tile
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd tile_tile.png
+
+newmtl ConcreteBare
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd ConcreteBare.png
+
+newmtl Door_01
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Door_01.png
+
+newmtl material_0
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd material_0.png
+
+newmtl Glass
+Tr 0.75
+Tf 1.0000 1.0000 1.0000
+illum 1
+Ka 1 1 1
+Kd 0.8 0.8 0.8
+Ke 0 0 0
+
+newmtl light
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 1 1 1
+map_Kd light.png
+map_Ke emissiveMap8.png
+
+newmtl metro_map
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd metro_map.png
+
+newmtl Posters
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Posters.png
+
+newmtl metal_01
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd metal_01.png
+
+newmtl material_1
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd material_1.png
+
+newmtl TactilePaving
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd TactilePaving.png
+
+newmtl road_rails
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd road_rails.png
+
+newmtl ticket_machine
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd ticket_machine.png
+
+newmtl trash_can
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd trash_can.png
+
+newmtl Vending_machine
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Vending_machine.png
+
+newmtl material_2
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd material_2.png
+
+newmtl metal_05
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd metal_05.png
+
+newmtl seats
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd seats.png
+
+newmtl metal
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pm 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd metal.png
+map_Pm metalnessMap21.png
+map_Pr metalnessMap21.png
+
+newmtl metal_04
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd metal_04.png
+
+newmtl metal_03
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd metal_03.png
+
+newmtl material_3
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd material_3.png
+
+newmtl Trains_01
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Trains_01.png
+
+newmtl Trains
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 1
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Trains.png

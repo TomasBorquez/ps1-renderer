@@ -5,11 +5,12 @@
 #include <cglm.h>
 
 #include "gl.h"
+#include "shader.h"
 
 Object LightObjCreate() {
   Object result = {0};
 
-  result.shaderID = GLCreateShader(S("./src/shaders/light-obj.vert"), S("./src/shaders/light-obj.frag"));
+  result.shaderID = GLCreateShader(S("light-obj.vert"), S("light-obj.frag"));
   GLShaderUse(result.shaderID);
 
   f32 vertices[] = {

@@ -6,10 +6,11 @@
 #include <stddef.h>
 
 #include "gl.h"
+#include "shader.h"
 
 Object ModelObjCreate(char *path, char *directory) {
   Object result = {0};
-  result.shaderID = GLCreateShader(S("./src/shaders/model-obj.vert"), S("./src/shaders/model-obj.frag"));
+  result.shaderID = GLCreateShader(S("model-obj.vert"), S("model-obj.frag"));
   GLShaderUse(result.shaderID);
   result.model = LoadModel(path, directory);
   return result;

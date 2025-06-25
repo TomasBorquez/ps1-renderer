@@ -52,7 +52,7 @@ struct PointLight {
   float linear;  // 4 bytes -> 16
 
   float quadratic; // 4 bytes
-  vec3 _pad3;      // 12 bytes -> 16
+  float _pad3[3];  // 12 bytes -> 16
 }; // Total: 80 bytes
 
 /* Uniforms */
@@ -72,4 +72,5 @@ layout(std430, binding = 1) buffer LightingData {
   SpotLight spotLights[MAX_SPOT_LIGHTS];    // 96 * 4 = 384 bytes
   PointLight pointLights[MAX_POINT_LIGHTS]; // 80 * 10 = 800 bytes
 }; // Total: 1280 bytes
+
 #endif
