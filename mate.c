@@ -6,7 +6,7 @@
 i32 main() {
   StartBuild();
   {
-    Executable exe = CreateExecutable((ExecutableOptions){.output = "main", .flags = "-Wall -Wextra -ggdb -std=c23 -DCIMGUI_USE_OPENGL3 -DCIMGUI_USE_SDL3 -DIMGUI_IMPL_OPENGL_LOADER_GL3W"});
+    Executable exe = CreateExecutable((ExecutableOptions){.output = "main", .flags = "-Wall -Wextra -ggdb -DCIMGUI_USE_OPENGL3 -DCIMGUI_USE_SDL3 -DIMGUI_IMPL_OPENGL_LOADER_GL3W"});
     AddFile(exe, "./src/main.c");
     AddFile(exe, "./src/camera.c");
     AddFile(exe, "./src/renderer.c");
