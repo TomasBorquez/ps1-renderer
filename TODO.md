@@ -14,12 +14,6 @@
     - [x] matrices_ssbo.glsl
     - [x] shadows.glsl
     - [x] fog.glsl
-- [ ] Make less GPU calls
-    - [x] Use UBOS for view uniform, fog, night, etc.
-    - [x] `UseShader` should check what shader we have bound at the moment, if same shader skip
-    - [x] HashMap for uniforms instead of so many GL calls - tried, didn't change much UBOS/SSBOs are better
-    - [x] SSBOs instead, for lighting and matrices
-    - [ ] Batch rendering
 - [x] Scene loader
     - [x] Single `*.c` files in `./src/scenes`
     - [x] Generic `SceneUpdate` to update view SSBO and light SSBO
@@ -31,6 +25,12 @@
     - [x] Start with F5
     - [x] If fails, show message but keep old shaders (abort if first time compiling)
     - [x] Update ShaderID on each object array
+- [ ] Make less GPU calls
+    - [x] Use UBOS for view uniform, fog, night, etc.
+    - [x] `UseShader` should check what shader we have bound at the moment, if same shader skip
+    - [x] HashMap for uniforms instead of so many GL calls - tried, didn't change much UBOS/SSBOs are better
+    - [x] SSBOs instead, for lighting and matrices
+    - [ ] Batch rendering
 - [ ] Better GL abstractions, 
     - [x] Prefix with GL
     - [ ] SubData
